@@ -1,0 +1,242 @@
+@import 'tailwindcss';
+
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+/* ===== THEME DEFINITIONS ===== */
+
+/* ═══ LIGHT THEMES ═══ */
+
+/* -- Light: Clean white, blue accent, crisp and minimal -- */
+[data-theme="light"] {
+  --color-bg-primary: #f8f9fb;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #eef0f4;
+  --color-bg-hover: #e3e6ed;
+  --color-border: #c8ced8;
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6b7280;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-muted: rgba(37, 99, 235, 0.08);
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-sidebar: #ffffff;
+}
+
+/* -- Slate (Light): Cool blue-steel, refined and airy -- */
+[data-theme="slate"] {
+  --color-bg-primary: #dce2ea;
+  --color-bg-secondary: #e8ecf2;
+  --color-bg-tertiary: #cdd5e0;
+  --color-bg-hover: #c2cad7;
+  --color-border: #a8b4c4;
+  --color-text-primary: #1b2537;
+  --color-text-secondary: #3b4d64;
+  --color-text-muted: #6b7d94;
+  --color-accent: #4a7ab5;
+  --color-accent-hover: #3968a3;
+  --color-accent-muted: rgba(74, 122, 181, 0.12);
+  --color-success: #15825e;
+  --color-warning: #c27a1a;
+  --color-danger: #d43d3d;
+  --color-sidebar: #d4dae4;
+}
+
+/* -- Strawberries & Cream: Warm cream, rosy pink accent, feminine and soft -- */
+[data-theme="strawberry"] {
+  --color-bg-primary: #fef9f6;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #fdf0ec;
+  --color-bg-hover: #fce4dd;
+  --color-border: #f0c4b8;
+  --color-text-primary: #3b1a12;
+  --color-text-secondary: #6b3a2e;
+  --color-text-muted: #a07068;
+  --color-accent: #e8829a;
+  --color-accent-hover: #d46a82;
+  --color-accent-muted: rgba(232, 130, 154, 0.1);
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-sidebar: #fffbf9;
+}
+
+/* ═══ DARK THEMES ═══ */
+
+/* -- Dark: Standard dark mode, neutral grays, safe and clean -- */
+[data-theme="dark"] {
+  --color-bg-primary: #121214;
+  --color-bg-secondary: #1c1c20;
+  --color-bg-tertiary: #28282e;
+  --color-bg-hover: #35353c;
+  --color-border: #404048;
+  --color-text-primary: #f4f4f5;
+  --color-text-secondary: #a8a8b0;
+  --color-text-muted: #707078;
+  --color-accent: #3b82f6;
+  --color-accent-hover: #60a5fa;
+  --color-accent-muted: rgba(59, 130, 246, 0.15);
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-sidebar: #0c0c0e;
+}
+
+/* -- Midnight: Deep navy, purple accent, improved contrast -- */
+[data-theme="midnight"] {
+  --color-bg-primary: #0a0c18;
+  --color-bg-secondary: #12162c;
+  --color-bg-tertiary: #1c2240;
+  --color-bg-hover: #262e52;
+  --color-border: #333d68;
+  --color-text-primary: #eef0ff;
+  --color-text-secondary: #aab2d4;
+  --color-text-muted: #7880a8;
+  --color-accent: #8b5cf6;
+  --color-accent-hover: #a78bfa;
+  --color-accent-muted: rgba(139, 92, 246, 0.18);
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #f472b6;
+  --color-sidebar: #060818;
+}
+
+/* -- Charcoal: True black, fiery orange, high-contrast industrial -- */
+[data-theme="charcoal"] {
+  --color-bg-primary: #0f0f0f;
+  --color-bg-secondary: #1a1a1a;
+  --color-bg-tertiary: #262626;
+  --color-bg-hover: #333333;
+  --color-border: #404040;
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #b3b3b3;
+  --color-text-muted: #737373;
+  --color-accent: #f97316;
+  --color-accent-hover: #fb923c;
+  --color-accent-muted: rgba(249, 115, 22, 0.18);
+  --color-success: #4ade80;
+  --color-warning: #facc15;
+  --color-danger: #f87171;
+  --color-sidebar: #080808;
+}
+
+/* ===== TAILWIND THEME ===== */
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-bg-primary: var(--color-bg-primary);
+  --color-bg-secondary: var(--color-bg-secondary);
+  --color-bg-tertiary: var(--color-bg-tertiary);
+  --color-bg-hover: var(--color-bg-hover);
+  --color-border: var(--color-border);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-muted: var(--color-accent-muted);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --color-sidebar: var(--color-sidebar);
+}
+
+/* ===== BASE STYLES ===== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-bg-tertiary) transparent;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== ANIMATIONS ===== */
+
+/* Page enter animation — triggers on mount via key change */
+.page-enter {
+  animation: pageEnter 200ms ease-out both;
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Staggered fade-in for child items */
+.stagger-in > * {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: staggerFadeIn 200ms ease-out forwards;
+}
+.stagger-in > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-in > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-in > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-in > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-in > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-in > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-in > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-in > *:nth-child(8) { animation-delay: 280ms; }
+
+@keyframes staggerFadeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Animated progress bar fill — only on mount */
+.progress-fill {
+  animation: progressGrow 600ms ease-out forwards;
+}
+
+@keyframes progressGrow {
+  from { width: 0%; }
+}
+
+/* Celebration burst on course pass */
+.celebrate-burst {
+  background: radial-gradient(circle, var(--color-success) 0%, transparent 70%);
+  animation: burstFade 1.5s ease-out forwards;
+  opacity: 0.3;
+}
+
+@keyframes burstFade {
+  0% { opacity: 0.4; transform: scale(0.5); }
+  50% { opacity: 0.2; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+/* Smooth expand/collapse for accordion sections */
+.accordion-enter {
+  animation: accordionOpen 250ms ease-out both;
+  overflow: hidden;
+}
+
+@keyframes accordionOpen {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 2000px; }
+}
+
+/* Hover lift for interactive cards */
+.card-hover {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.card-hover:active {
+  transform: translateY(0);
+}

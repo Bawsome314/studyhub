@@ -1,0 +1,83 @@
+{
+  "courseId": "d196",
+  "courseName": "Principles of Financial and Managerial Accounting",
+  "courseCode": "D196",
+  "tools": ["finance", "accounting"],
+  "units": [
+    {
+      "id": "unit-1",
+      "name": "Unit 1: Accounting Fundamentals",
+      "cards": [
+        { "id": "c1-1", "term": "Assets", "definition": "Resources owned by a company that provide future economic benefits. Examples include cash, inventory, equipment, and accounts receivable." },
+        { "id": "c1-2", "term": "Liabilities", "definition": "Obligations or debts owed by a company to outside parties. Examples include accounts payable, loans, and bonds payable." },
+        { "id": "c1-3", "term": "Equity", "definition": "The residual interest in the assets of a company after deducting liabilities. Also known as stockholders' equity or owners' equity." },
+        { "id": "c1-4", "term": "Revenue", "definition": "Income earned from normal business operations, such as sales of goods or services." },
+        { "id": "c1-5", "term": "Expenses", "definition": "Costs incurred in the process of earning revenue. Examples include rent, salaries, and utilities." },
+        { "id": "c1-6", "term": "Accounting Equation", "definition": "Assets = Liabilities + Equity. The fundamental equation that underlies all of accounting." },
+        { "id": "c1-7", "term": "GAAP", "definition": "Generally Accepted Accounting Principles. The standard framework of guidelines for financial accounting in the United States." },
+        { "id": "c1-8", "term": "Double-Entry Bookkeeping", "definition": "A system where every transaction affects at least two accounts, maintaining the balance of the accounting equation." },
+        { "id": "c1-9", "term": "Accrual Basis Accounting", "definition": "Revenue is recognized when earned and expenses when incurred, regardless of when cash is exchanged." },
+        { "id": "c1-10", "term": "Cash Basis Accounting", "definition": "Revenue and expenses are recorded only when cash is received or paid." }
+      ],
+      "questions": [
+        { "id": "q1-1", "question": "What is the fundamental accounting equation?", "choices": ["Assets = Liabilities + Equity", "Assets = Liabilities - Equity", "Assets + Liabilities = Equity", "Revenue - Expenses = Net Income"], "correctIndex": 0, "explanation": "The accounting equation states that Assets = Liabilities + Equity. This equation must always balance." },
+        { "id": "q1-2", "question": "Which of the following is an asset?", "choices": ["Accounts Payable", "Common Stock", "Accounts Receivable", "Retained Earnings"], "correctIndex": 2, "explanation": "Accounts Receivable is an asset representing money owed to the company by customers." },
+        { "id": "q1-3", "question": "Under accrual accounting, when is revenue recognized?", "choices": ["When cash is received", "When earned", "When invoiced", "At year end"], "correctIndex": 1, "explanation": "Under accrual accounting, revenue is recognized when it is earned, regardless of when payment is received." },
+        { "id": "q1-4", "question": "What does GAAP stand for?", "choices": ["General Accounting and Auditing Procedures", "Generally Accepted Accounting Principles", "Government Approved Accounting Practices", "Global Accounting Assessment Program"], "correctIndex": 1, "explanation": "GAAP stands for Generally Accepted Accounting Principles." },
+        { "id": "q1-5", "question": "In double-entry bookkeeping, every transaction affects:", "choices": ["Only one account", "At least two accounts", "Exactly three accounts", "All accounts"], "correctIndex": 1, "explanation": "Double-entry bookkeeping requires that every transaction affects at least two accounts to keep the accounting equation in balance." },
+        { "id": "q1-6", "question": "Which is NOT a component of the accounting equation?", "choices": ["Assets", "Revenue", "Liabilities", "Equity"], "correctIndex": 1, "explanation": "Revenue is not a direct component of the accounting equation (A = L + E), though it does affect equity through net income." },
+        { "id": "q1-7", "question": "Salaries paid to employees are classified as:", "choices": ["Assets", "Liabilities", "Expenses", "Revenue"], "correctIndex": 2, "explanation": "Salaries are operating expenses incurred to generate revenue." }
+      ]
+    },
+    {
+      "id": "unit-2",
+      "name": "Unit 2: Financial Statements",
+      "cards": [
+        { "id": "c2-1", "term": "Income Statement", "definition": "A financial statement showing revenues, expenses, and net income or loss over a specific period of time." },
+        { "id": "c2-2", "term": "Balance Sheet", "definition": "A financial statement showing assets, liabilities, and equity at a specific point in time. Also called the Statement of Financial Position." },
+        { "id": "c2-3", "term": "Cash Flow Statement", "definition": "A financial statement showing cash inflows and outflows from operating, investing, and financing activities over a period." },
+        { "id": "c2-4", "term": "Statement of Retained Earnings", "definition": "Shows changes in retained earnings over a period, including net income and dividends declared." },
+        { "id": "c2-5", "term": "Net Income", "definition": "Total revenue minus total expenses. Also called the bottom line or profit." },
+        { "id": "c2-6", "term": "Retained Earnings", "definition": "Cumulative net income that has been retained in the business rather than distributed as dividends." },
+        { "id": "c2-7", "term": "Depreciation", "definition": "The systematic allocation of the cost of a tangible asset over its useful life." },
+        { "id": "c2-8", "term": "Current Assets", "definition": "Assets expected to be converted to cash or used within one year, such as cash, receivables, and inventory." },
+        { "id": "c2-9", "term": "Current Liabilities", "definition": "Obligations expected to be paid within one year, such as accounts payable and short-term debt." },
+        { "id": "c2-10", "term": "Working Capital", "definition": "Current assets minus current liabilities. Measures a company's short-term financial health." }
+      ],
+      "questions": [
+        { "id": "q2-1", "question": "Which financial statement shows a company's financial position at a specific point in time?", "choices": ["Income Statement", "Balance Sheet", "Cash Flow Statement", "Statement of Retained Earnings"], "correctIndex": 1, "explanation": "The balance sheet (Statement of Financial Position) shows assets, liabilities, and equity at a specific date." },
+        { "id": "q2-2", "question": "Net income is calculated as:", "choices": ["Assets - Liabilities", "Revenue - Expenses", "Cash inflows - Cash outflows", "Retained Earnings + Dividends"], "correctIndex": 1, "explanation": "Net income equals total revenue minus total expenses for a period." },
+        { "id": "q2-3", "question": "Which section of the cash flow statement includes cash received from customers?", "choices": ["Operating Activities", "Investing Activities", "Financing Activities", "None of these"], "correctIndex": 0, "explanation": "Cash received from customers is part of operating activities." },
+        { "id": "q2-4", "question": "Depreciation represents:", "choices": ["The market value decline of an asset", "Systematic cost allocation over useful life", "Cash set aside for replacement", "The repair cost of assets"], "correctIndex": 1, "explanation": "Depreciation is the systematic allocation of an asset's cost over its useful life, not a measure of market value." },
+        { "id": "q2-5", "question": "Working capital is calculated as:", "choices": ["Total Assets - Total Liabilities", "Current Assets - Current Liabilities", "Cash - Short-term Debt", "Revenue - COGS"], "correctIndex": 1, "explanation": "Working capital = Current Assets - Current Liabilities. It measures short-term liquidity." },
+        { "id": "q2-6", "question": "Which is a current asset?", "choices": ["Land", "Patent", "Inventory", "Equipment"], "correctIndex": 2, "explanation": "Inventory is a current asset because it is expected to be sold within one year." },
+        { "id": "q2-7", "question": "Retained earnings are affected by:", "choices": ["Only revenue", "Net income and dividends", "Only expenses", "Cash receipts"], "correctIndex": 1, "explanation": "Retained earnings increase with net income and decrease with dividends declared." }
+      ]
+    },
+    {
+      "id": "unit-3",
+      "name": "Unit 3: Recording Transactions",
+      "cards": [
+        { "id": "c3-1", "term": "Journal Entry", "definition": "A record of a business transaction in the accounting journal, showing debits and credits." },
+        { "id": "c3-2", "term": "Debit", "definition": "An entry on the left side of a T-account. Increases assets and expenses; decreases liabilities, equity, and revenue." },
+        { "id": "c3-3", "term": "Credit", "definition": "An entry on the right side of a T-account. Increases liabilities, equity, and revenue; decreases assets and expenses." },
+        { "id": "c3-4", "term": "T-Account", "definition": "A visual representation of a general ledger account showing debits on the left and credits on the right." },
+        { "id": "c3-5", "term": "General Ledger", "definition": "The complete record of all financial transactions for a company, organized by account." },
+        { "id": "c3-6", "term": "Trial Balance", "definition": "A listing of all account balances to verify that total debits equal total credits." },
+        { "id": "c3-7", "term": "Adjusting Entries", "definition": "Journal entries made at the end of a period to update account balances before financial statements are prepared." },
+        { "id": "c3-8", "term": "Closing Entries", "definition": "Entries made at year-end to transfer temporary account balances (revenue, expenses) to retained earnings." },
+        { "id": "c3-9", "term": "Accounts Receivable", "definition": "Money owed to the company by customers for goods or services delivered on credit." },
+        { "id": "c3-10", "term": "Accounts Payable", "definition": "Money the company owes to suppliers for goods or services received on credit." }
+      ],
+      "questions": [
+        { "id": "q3-1", "question": "A debit entry increases which type of account?", "choices": ["Liabilities", "Revenue", "Assets", "Equity"], "correctIndex": 2, "explanation": "Debits increase asset and expense accounts. They decrease liability, equity, and revenue accounts." },
+        { "id": "q3-2", "question": "What is the purpose of a trial balance?", "choices": ["To prepare financial statements", "To verify debits equal credits", "To record transactions", "To close accounts"], "correctIndex": 1, "explanation": "A trial balance verifies that total debits equal total credits across all accounts." },
+        { "id": "q3-3", "question": "Adjusting entries are made:", "choices": ["At the beginning of a period", "When cash is received", "At the end of a period", "Only annually"], "correctIndex": 2, "explanation": "Adjusting entries are made at the end of an accounting period to properly state account balances." },
+        { "id": "q3-4", "question": "Which account has a normal credit balance?", "choices": ["Cash", "Equipment", "Accounts Payable", "Rent Expense"], "correctIndex": 2, "explanation": "Accounts Payable is a liability and has a normal credit balance." },
+        { "id": "q3-5", "question": "Closing entries transfer balances from:", "choices": ["Permanent to temporary accounts", "Temporary to retained earnings", "Assets to liabilities", "Cash to revenue"], "correctIndex": 1, "explanation": "Closing entries transfer temporary account balances (revenue, expenses, dividends) to retained earnings." },
+        { "id": "q3-6", "question": "If a company buys supplies on credit, the entry includes:", "choices": ["Debit Cash, Credit Supplies", "Debit Supplies, Credit Accounts Payable", "Debit Supplies, Credit Cash", "Debit Accounts Payable, Credit Supplies"], "correctIndex": 1, "explanation": "Buying on credit increases Supplies (debit) and increases Accounts Payable (credit)." },
+        { "id": "q3-7", "question": "The general ledger contains:", "choices": ["Only balance sheet accounts", "Only income statement accounts", "All accounts for the company", "Only cash transactions"], "correctIndex": 2, "explanation": "The general ledger is the complete record of all accounts for the company." }
+      ]
+    }
+  ]
+}

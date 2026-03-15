@@ -1,0 +1,115 @@
+{
+  "courseId": "d196",
+  "courseName": "Principles of Financial and Managerial Accounting",
+  "courseCode": "D196",
+  "units": [
+    {
+      "id": "unit-1",
+      "name": "Unit 1: Accounting Fundamentals",
+      "cards": [
+        {
+          "id": "c1-1",
+          "term": "Assets",
+          "definition": "Resources owned by a company that provide future economic benefits, such as cash, inventory, and equipment. Assets are reported on the balance sheet and represent what the company owns or controls.",
+          "question": "A company purchases a delivery truck for $25,000, paying $5,000 cash and financing the rest. How are total assets affected?",
+          "choices": ["Increase by $25,000", "Increase by $20,000", "Stay the same", "Decrease by $5,000"],
+          "correctIndex": 1,
+          "explanation": "Cash decreases by $5,000 and the truck (asset) increases by $25,000, so net assets increase by $20,000. The $20,000 loan is a liability."
+        },
+        {
+          "id": "c1-2",
+          "term": "Liabilities",
+          "definition": "Obligations or debts owed by a company to outside parties, such as accounts payable, loans, and bonds payable. Liabilities represent claims by creditors against the company's assets.",
+          "question": "Which of the following transactions would increase liabilities?",
+          "choices": ["Paying off a loan", "Purchasing supplies on credit", "Collecting accounts receivable", "Owner investing cash"],
+          "correctIndex": 1,
+          "explanation": "Purchasing supplies on credit creates an accounts payable obligation, increasing liabilities."
+        },
+        {
+          "id": "c1-3",
+          "term": "Accounting Equation",
+          "definition": "Assets = Liabilities + Equity. The fundamental equation underlying all of accounting. Every transaction must maintain this balance, which is the basis for double-entry bookkeeping.",
+          "question": "A company has $80,000 in assets and $50,000 in liabilities. The owner withdraws $5,000. What is the new equity?",
+          "choices": ["$30,000", "$25,000", "$35,000", "$20,000"],
+          "correctIndex": 1,
+          "explanation": "Original equity = $80,000 - $50,000 = $30,000. After a $5,000 withdrawal, equity drops to $25,000 and assets drop to $75,000."
+        }
+      ],
+      "matchPairs": [
+        { "id": "m1-1", "term": "Assets", "definition": "Resources providing future benefit" },
+        { "id": "m1-2", "term": "Liabilities", "definition": "Debts owed to outside parties" },
+        { "id": "m1-3", "term": "Equity", "definition": "Residual interest after debts" },
+        { "id": "m1-4", "term": "Revenue", "definition": "Income from normal operations" },
+        { "id": "m1-5", "term": "Expenses", "definition": "Costs of earning revenue" },
+        { "id": "m1-6", "term": "GAAP", "definition": "US accounting standards" },
+        { "id": "m1-7", "term": "Double-Entry", "definition": "Every transaction hits 2 accounts" },
+        { "id": "m1-8", "term": "Accrual Basis", "definition": "Record when earned, not when paid" }
+      ]
+    },
+    {
+      "id": "unit-2",
+      "name": "Unit 2: Financial Statements",
+      "cards": [
+        {
+          "id": "c2-1",
+          "term": "Income Statement",
+          "definition": "A financial statement showing revenues, expenses, and net income or loss over a specific period of time. Also called the profit and loss statement (P&L). Reports operating performance.",
+          "question": "A company reports $200,000 revenue, $120,000 COGS, and $50,000 operating expenses. What is net income?",
+          "choices": ["$200,000", "$80,000", "$30,000", "$50,000"],
+          "correctIndex": 2,
+          "explanation": "Net income = Revenue - COGS - Operating Expenses = $200,000 - $120,000 - $50,000 = $30,000."
+        },
+        {
+          "id": "c2-2",
+          "term": "Balance Sheet",
+          "definition": "A financial statement showing assets, liabilities, and equity at a specific point in time. Also called the statement of financial position. Provides a snapshot of what the company owns and owes.",
+          "question": "Which financial statement would you use to determine if a company can pay its short-term debts?",
+          "choices": ["Income Statement", "Balance Sheet", "Statement of Retained Earnings", "Notes to Financial Statements"],
+          "correctIndex": 1,
+          "explanation": "The balance sheet shows current assets vs current liabilities, indicating short-term liquidity."
+        },
+        {
+          "id": "c2-3",
+          "term": "Net Income",
+          "definition": "Total revenue minus total expenses. Also called the bottom line or profit. Net income flows into retained earnings on the balance sheet and is reported on the income statement.",
+          "question": "Net income from the income statement directly affects which balance sheet account?",
+          "choices": ["Cash", "Accounts Receivable", "Retained Earnings", "Common Stock"],
+          "correctIndex": 2,
+          "explanation": "Net income increases retained earnings (part of equity) through the closing process."
+        }
+      ],
+      "matchPairs": [
+        { "id": "m2-1", "term": "Income Statement", "definition": "Revenue and expenses over time" },
+        { "id": "m2-2", "term": "Balance Sheet", "definition": "Assets, liabilities, equity snapshot" },
+        { "id": "m2-3", "term": "Cash Flow Statement", "definition": "Cash in/out by activity type" },
+        { "id": "m2-4", "term": "Net Income", "definition": "Revenue minus expenses" },
+        { "id": "m2-5", "term": "Retained Earnings", "definition": "Cumulative undistributed profits" },
+        { "id": "m2-6", "term": "Depreciation", "definition": "Cost allocation over useful life" },
+        { "id": "m2-7", "term": "Current Assets", "definition": "Converted to cash within 1 year" },
+        { "id": "m2-8", "term": "Working Capital", "definition": "Current assets minus current liabs" }
+      ]
+    }
+  ],
+  "extraQuestions": [
+    { "id": "eq-1", "question": "A company buys equipment for $10,000 cash. How does this affect the accounting equation?", "choices": ["Assets increase, Liabilities increase", "Assets stay the same (cash down, equipment up)", "Assets decrease, Equity decreases", "Liabilities decrease, Equity increases"], "correctIndex": 1, "explanation": "Cash decreases and Equipment increases by the same amount, so total assets stay the same." },
+    { "id": "eq-2", "question": "Under GAAP, which principle requires revenue to be recorded when earned?", "choices": ["Matching Principle", "Revenue Recognition Principle", "Cost Principle", "Conservatism"], "correctIndex": 1, "explanation": "The Revenue Recognition Principle states revenue is recorded when earned, regardless of when cash is received." },
+    { "id": "eq-3", "question": "Which financial statement links the income statement to the balance sheet?", "choices": ["Cash Flow Statement", "Statement of Retained Earnings", "Notes to Financial Statements", "Trial Balance"], "correctIndex": 1, "explanation": "The Statement of Retained Earnings connects net income from the income statement to equity on the balance sheet." }
+  ],
+  "mockPool": [
+    { "id": "mk-1", "question": "A company has $50,000 in assets and $30,000 in liabilities. What is the equity?", "choices": ["$80,000", "$20,000", "$30,000", "$50,000"], "correctIndex": 1, "explanation": "Equity = Assets - Liabilities = $50,000 - $30,000 = $20,000." },
+    { "id": "mk-2", "question": "Which transaction would increase both assets and liabilities?", "choices": ["Paying cash for supplies", "Borrowing money from a bank", "Owner investing cash", "Collecting accounts receivable"], "correctIndex": 1, "explanation": "Borrowing increases Cash (asset) and Notes Payable (liability)." },
+    { "id": "mk-3", "question": "Depreciation expense appears on which statement?", "choices": ["Balance Sheet only", "Income Statement only", "Both Income Statement and indirectly Balance Sheet", "Cash Flow Statement only"], "correctIndex": 2, "explanation": "Depreciation is an expense on the Income Statement and reduces asset value on the Balance Sheet." }
+  ],
+  "trueFalsePool": [
+    { "id": "tf-1", "statement": "Under accrual accounting, revenue is recorded when cash is received.", "correct": false, "explanation": "Under accrual accounting, revenue is recorded when earned, regardless of when cash is received." },
+    { "id": "tf-2", "statement": "The balance sheet shows a company's financial position at a specific point in time.", "correct": true, "explanation": "The balance sheet is a snapshot of assets, liabilities, and equity at a given date." },
+    { "id": "tf-3", "statement": "Accounts Payable is classified as an asset on the balance sheet.", "correct": false, "explanation": "Accounts Payable is a current liability, not an asset." },
+    { "id": "tf-4", "statement": "The accounting equation must always balance after every transaction.", "correct": true, "explanation": "Every transaction affects at least two accounts, maintaining the balance of Assets = Liabilities + Equity." }
+  ],
+  "fillInBlankPool": [
+    { "id": "fb-1", "sentence": "The _____ states that Assets = Liabilities + Equity.", "answer": "accounting equation", "distractors": ["income statement", "balance sheet", "cash flow statement"] },
+    { "id": "fb-2", "sentence": "_____ is the systematic allocation of an asset's cost over its useful life.", "answer": "depreciation", "distractors": ["amortization", "depletion", "impairment"] },
+    { "id": "fb-3", "sentence": "Current assets minus current liabilities equals _____.", "answer": "working capital", "distractors": ["net income", "retained earnings", "equity"] },
+    { "id": "fb-4", "sentence": "In double-entry bookkeeping, every transaction affects at least _____ accounts.", "answer": "two", "distractors": ["one", "three", "four"] }
+  ]
+}

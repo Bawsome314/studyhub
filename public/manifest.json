@@ -1,0 +1,12 @@
+{
+  "name": "StudyHub",
+  "short_name": "StudyHub",
+  "description": "Personal study platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121214",
+  "theme_color": "#3b82f6",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
