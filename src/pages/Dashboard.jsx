@@ -128,6 +128,7 @@ export default function Dashboard() {
   const [fading, setFading] = useState(false);
   const { courses, totalCUs } = useCourses();
   const [lastStudied] = useLocalStorage('studyhub-last-studied', {});
+  const displayCUs = profile.programCUs || totalCUs;
 
   const passedCourses = courses.filter(c => courseProgress[c.id]?.status === 'passed');
   const inProgressCourses = courses.filter(c => courseProgress[c.id]?.status === 'in-progress');
@@ -290,7 +291,7 @@ export default function Dashboard() {
       <div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard icon={BookCheck} label="Courses Passed" value={passedCourses.length} color="bg-success/80" />
-          <StatCard icon={GraduationCap} label="CUs Earned" value={`${passedCUs}/${totalCUs}`} color="bg-accent/80" />
+          <StatCard icon={GraduationCap} label="CUs Earned" value={`${passedCUs}/${displayCUs}`} color="bg-accent/80" />
           <StatCard icon={currentPair[0].icon} label={currentPair[0].label} value={currentPair[0].value} color={currentPair[0].color} fading={fading} />
           <StatCard icon={currentPair[1].icon} label={currentPair[1].label} value={currentPair[1].value} color={currentPair[1].color} fading={fading} />
         </div>

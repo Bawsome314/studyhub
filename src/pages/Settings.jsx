@@ -1,6 +1,6 @@
 import { useTheme } from '../contexts/ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Palette, User, Download, Upload, FileJson, BookOpen, Cloud, Copy, Check, HardDrive, GraduationCap, Plus, Pencil, Trash2, RotateCcw, X, ChevronDown } from 'lucide-react';
+import { Palette, User, Download, Upload, FileJson, BookOpen, Cloud, Copy, Check, HardDrive, GraduationCap, Plus, Pencil, Trash2, X, ChevronDown, Search } from 'lucide-react';
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -26,6 +26,7 @@ export default function Settings() {
   const [confirmAction, setConfirmAction] = useState(null);
   const { courses, totalCUs, addCourse, updateCourse, removeCourse, loadPreset, clearAll } = useCourses();
   const [coursesExpanded, setCoursesExpanded] = useState(false);
+  const [courseSearch, setCourseSearch] = useState('');
   const [courseFormOpen, setCourseFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
   const [courseForm, setCourseForm] = useState({ code: '', name: '', cus: 3, type: 'OA', category: 'Business Core' });
@@ -202,7 +203,7 @@ export default function Settings() {
               <input type="text" value={profile.program} onChange={e => setProfile(p => ({ ...p, program: e.target.value }))}
                 className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="text-xs text-text-muted block mb-1">Term Start</label>
                 <input type="date" value={profile.termStart} onChange={e => setProfile(p => ({ ...p, termStart: e.target.value }))}
@@ -212,6 +213,12 @@ export default function Settings() {
                 <label className="text-xs text-text-muted block mb-1">Term End</label>
                 <input type="date" value={profile.termEnd} onChange={e => setProfile(p => ({ ...p, termEnd: e.target.value }))}
                   className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent" />
+              </div>
+              <div>
+                <label className="text-xs text-text-muted block mb-1">Program CUs</label>
+                <input type="number" min="1" max="999" value={profile.programCUs || ''} onChange={e => setProfile(p => ({ ...p, programCUs: parseInt(e.target.value) || '' }))}
+                  placeholder={String(totalCUs)}
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary font-num placeholder:text-text-muted focus:outline-none focus:border-accent" />
               </div>
             </div>
           </div>
@@ -277,14 +284,32 @@ export default function Settings() {
                 )}
               </div>
 
+              {/* Course search */}
+              {courses.length > 6 && (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
+                  <input
+                    type="text"
+                    placeholder="Filter courses..."
+                    value={courseSearch}
+                    onChange={e => setCourseSearch(e.target.value)}
+                    className="w-full bg-bg-tertiary border border-border rounded-lg pl-8 pr-3 py-1.5 text-[16px] sm:text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent"
+                  />
+                </div>
+              )}
+
               {/* Course list grouped by category */}
               {(() => {
-                const categories = [...new Set(courses.map(c => c.category))];
+                const q = courseSearch.toLowerCase().trim();
+                const filtered = q
+                  ? courses.filter(c => c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q))
+                  : courses;
+                const categories = [...new Set(filtered.map(c => c.category))];
                 return categories.map(cat => (
                   <div key={cat}>
                     <p className="text-[10px] text-text-muted uppercase tracking-wider mb-1.5">{cat}</p>
                     <div className="space-y-0.5">
-                      {courses.filter(c => c.category === cat).map(c => (
+                      {filtered.filter(c => c.category === cat).map(c => (
                         <div key={c.id} className="group flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-bg-hover">
                           <span className="text-xs font-mono text-accent w-10 shrink-0">{c.code}</span>
                           <span className="text-xs text-text-primary flex-1 truncate">{c.name}</span>

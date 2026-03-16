@@ -105,7 +105,8 @@ export default function Sidebar() {
     .filter(c => courseProgress[c.id]?.status === 'passed')
     .reduce((sum, c) => sum + c.cus, 0);
 
-  const progressPct = totalCUs > 0 ? Math.round((passedCUs / totalCUs) * 100) : 0;
+  const displayCUs = profile.programCUs || totalCUs;
+  const progressPct = displayCUs > 0 ? Math.round((passedCUs / displayCUs) * 100) : 0;
 
   function getCourseStatus(courseId) {
     return courseProgress[courseId]?.status || 'not-started';
@@ -286,7 +287,7 @@ export default function Sidebar() {
       <div className="px-4 py-4 border-t border-border">
         <div className="flex justify-between text-xs mb-2">
           <span className="text-text-muted">Term Progress</span>
-          <span className="font-num text-text-secondary">{passedCUs}/{totalCUs} CUs</span>
+          <span className="font-num text-text-secondary">{passedCUs}/{displayCUs} CUs</span>
         </div>
         <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden">
           <div

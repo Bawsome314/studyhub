@@ -18,8 +18,10 @@ function StatusIcon({ status }) {
 export default function TermPlan() {
   const [courseProgress, setCourseProgress] = useLocalStorage('studyhub-course-progress', {});
   const { courses, totalCUs } = useCourses();
+  const [profile] = useLocalStorage('studyhub-profile', {});
   const [search, setSearch] = useState('');
   const [lastStudied] = useLocalStorage('studyhub-last-studied', {});
+  const displayCUs = profile.programCUs || totalCUs;
   const navigate = useNavigate();
 
   const [celebrating, setCelebrating] = useState(null);
@@ -85,7 +87,7 @@ export default function TermPlan() {
             <span className="font-num text-text-primary font-semibold">{passedCount}</span>/{courses.length} courses
           </span>
           <span className="text-text-muted">
-            <span className="font-num text-text-primary font-semibold">{passedCUs}</span>/{totalCUs} CUs
+            <span className="font-num text-text-primary font-semibold">{passedCUs}</span>/{displayCUs} CUs
           </span>
         </div>
       </div>
