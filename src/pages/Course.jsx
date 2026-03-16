@@ -34,7 +34,7 @@ export default function Course() {
   const { courseId } = useParams();
   const { courses } = useCourses();
   const course = courses.find(c => c.id === courseId);
-  const isCapstone = course?.category === 'Capstone';
+  const isCapstone = course?.category === 'Capstone' || course?.type === 'Capstone';
   const [activeTab, setActiveTab] = useState(
     isCapstone ? 'study-guide' : course?.type === 'PA' ? 'tasks' : 'study-guide'
   );

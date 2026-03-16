@@ -290,7 +290,7 @@ export default function Settings() {
                           <span className="text-xs text-text-primary flex-1 truncate">{c.name}</span>
                           <span className="text-[10px] text-text-muted font-num shrink-0">{c.cus} CU</span>
                           <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
-                            c.type === 'OA' ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'
+                            c.type === 'OA' ? 'bg-blue-500/10 text-blue-400' : c.type === 'Capstone' ? 'bg-amber-500/10 text-amber-400' : 'bg-purple-500/10 text-purple-400'
                           }`}>{c.type}</span>
                           <button
                             onClick={() => {
@@ -467,6 +467,7 @@ export default function Settings() {
                   className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary focus:outline-none focus:border-accent">
                   <option value="OA">OA (Objective Assessment)</option>
                   <option value="PA">PA (Performance Assessment)</option>
+                  <option value="Capstone">Capstone</option>
                 </select>
               </div>
               <div>
@@ -491,10 +492,13 @@ export default function Settings() {
               <button
                 onClick={() => {
                   if (!courseForm.code.trim() || !courseForm.name.trim()) return;
+                  const finalForm = courseForm.type === 'Capstone'
+                    ? { ...courseForm, category: 'Capstone' }
+                    : courseForm;
                   if (editingCourse) {
-                    updateCourse(editingCourse, courseForm);
+                    updateCourse(editingCourse, finalForm);
                   } else {
-                    addCourse(courseForm);
+                    addCourse(finalForm);
                   }
                   setCourseFormOpen(false);
                   setEditingCourse(null);

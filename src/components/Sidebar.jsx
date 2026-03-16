@@ -96,7 +96,7 @@ export default function Sidebar() {
   const [lastStudied] = useLocalStorage('studyhub-last-studied', {});
   const [profile] = useLocalStorage('studyhub-profile', {});
 
-  const capstoneCourses = courses.filter(c => c.category === 'Capstone');
+  const capstoneCourses = courses.filter(c => c.category === 'Capstone' || c.type === 'Capstone');
   const capstoneIds = new Set(capstoneCourses.map(c => c.id));
   const oaCourses = courses.filter(c => c.type === 'OA' && !capstoneIds.has(c.id));
   const paCourses = courses.filter(c => c.type === 'PA' && !capstoneIds.has(c.id));
