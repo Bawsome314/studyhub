@@ -64,6 +64,25 @@
   --color-sidebar: #fffbf9;
 }
 
+/* -- Forest: Warm sage green, earthy and calm -- */
+[data-theme="forest"] {
+  --color-bg-primary: #f2f5f0;
+  --color-bg-secondary: #fafbf8;
+  --color-bg-tertiary: #e4e9df;
+  --color-bg-hover: #d6ddd0;
+  --color-border: #b8c3ae;
+  --color-text-primary: #1a2316;
+  --color-text-secondary: #3d4f35;
+  --color-text-muted: #6b7e60;
+  --color-accent: #4a8c5c;
+  --color-accent-hover: #3a7549;
+  --color-accent-muted: rgba(74, 140, 92, 0.10);
+  --color-success: #2d8659;
+  --color-warning: #b8860b;
+  --color-danger: #c0392b;
+  --color-sidebar: #eef2eb;
+}
+
 /* ═══ DARK THEMES ═══ */
 
 /* -- Dark: Standard dark mode, neutral grays, safe and clean -- */
@@ -121,6 +140,25 @@
   --color-warning: #facc15;
   --color-danger: #f87171;
   --color-sidebar: #080808;
+}
+
+/* -- Nord: Cool arctic blue-gray, calm and focused -- */
+[data-theme="nord"] {
+  --color-bg-primary: #2e3440;
+  --color-bg-secondary: #3b4252;
+  --color-bg-tertiary: #434c5e;
+  --color-bg-hover: #4c566a;
+  --color-border: #5a657a;
+  --color-text-primary: #eceff4;
+  --color-text-secondary: #d8dee9;
+  --color-text-muted: #8893a7;
+  --color-accent: #88c0d0;
+  --color-accent-hover: #8fbcbb;
+  --color-accent-muted: rgba(136, 192, 208, 0.15);
+  --color-success: #a3be8c;
+  --color-warning: #ebcb8b;
+  --color-danger: #bf616a;
+  --color-sidebar: #282e3a;
 }
 
 /* ===== TAILWIND THEME ===== */

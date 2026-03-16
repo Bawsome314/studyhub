@@ -5,10 +5,12 @@ const THEMES = [
   { id: 'light', name: 'Light', preview: '#2563eb', bg: '#f8f9fb', accent: '#2563eb', row: 'light' },
   { id: 'slate', name: 'Slate', preview: '#4a7ab5', bg: '#dce2ea', accent: '#4a7ab5', row: 'light' },
   { id: 'strawberry', name: 'Strawberries & Cream', preview: '#e8829a', bg: '#fef9f6', accent: '#e8829a', row: 'light' },
+  { id: 'forest', name: 'Forest', preview: '#4a8c5c', bg: '#f2f5f0', accent: '#4a8c5c', row: 'light' },
   // Dark row
   { id: 'dark', name: 'Dark', preview: '#3b82f6', bg: '#121214', accent: '#3b82f6', row: 'dark' },
   { id: 'midnight', name: 'Midnight', preview: '#8b5cf6', bg: '#0a0c18', accent: '#8b5cf6', row: 'dark' },
   { id: 'charcoal', name: 'Charcoal', preview: '#f97316', bg: '#0f0f0f', accent: '#f97316', row: 'dark' },
+  { id: 'nord', name: 'Nord', preview: '#88c0d0', bg: '#2e3440', accent: '#88c0d0', row: 'dark' },
 ];
 
 const ThemeContext = createContext();
