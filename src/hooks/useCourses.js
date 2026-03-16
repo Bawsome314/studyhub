@@ -1,61 +1,43 @@
 import { useMemo } from 'react';
-import { COURSES as DEFAULT_COURSES } from '../data/courses';
+import { COURSES as WGU_FINANCE_COURSES } from '../data/courses';
 import { useLocalStorage } from './useLocalStorage';
 
-export function useCourses() {
-  const [customCourses, setCustomCourses] = useLocalStorage('studyhub-custom-courses', []);
-  const [removedIds, setRemovedIds] = useLocalStorage('studyhub-removed-courses', []);
+export { WGU_FINANCE_COURSES };
 
-  const courses = useMemo(() => {
-    const kept = DEFAULT_COURSES.filter(c => !removedIds.includes(c.id));
-    return [...kept, ...customCourses];
-  }, [customCourses, removedIds]);
+export function useCourses() {
+  const [courses, setCourses] = useLocalStorage('studyhub-courses', []);
 
   const totalCUs = useMemo(() => courses.reduce((sum, c) => sum + c.cus, 0), [courses]);
 
   function addCourse(course) {
     const id = course.code.toLowerCase().replace(/\s+/g, '');
     const newCourse = { ...course, id, cus: Number(course.cus) };
-    setCustomCourses(prev => [...prev, newCourse]);
+    setCourses(prev => [...prev, newCourse]);
     return id;
   }
 
   function updateCourse(courseId, updates) {
-    // If updating a custom course
-    if (customCourses.some(c => c.id === courseId)) {
-      setCustomCourses(prev =>
-        prev.map(c => c.id === courseId ? { ...c, ...updates, cus: Number(updates.cus ?? c.cus) } : c)
-      );
-    } else {
-      // It's a default course — "remove" original and add edited copy as custom
-      const original = DEFAULT_COURSES.find(c => c.id === courseId);
-      if (!original) return;
-      setRemovedIds(prev => [...prev, courseId]);
-      setCustomCourses(prev => [...prev, { ...original, ...updates, cus: Number(updates.cus ?? original.cus) }]);
-    }
+    setCourses(prev =>
+      prev.map(c => c.id === courseId ? { ...c, ...updates, cus: Number(updates.cus ?? c.cus) } : c)
+    );
   }
 
   function removeCourse(courseId) {
-    if (customCourses.some(c => c.id === courseId)) {
-      setCustomCourses(prev => prev.filter(c => c.id !== courseId));
-    } else {
-      setRemovedIds(prev => [...prev, courseId]);
-    }
+    setCourses(prev => prev.filter(c => c.id !== courseId));
   }
 
-  function resetToDefaults() {
-    setCustomCourses([]);
-    setRemovedIds([]);
+  function loadPreset(presetCourses) {
+    // Merge: add courses that don't already exist by id
+    setCourses(prev => {
+      const existingIds = new Set(prev.map(c => c.id));
+      const newCourses = presetCourses.filter(c => !existingIds.has(c.id));
+      return [...prev, ...newCourses];
+    });
   }
 
-  function isCustom(courseId) {
-    return customCourses.some(c => c.id === courseId);
+  function clearAll() {
+    setCourses([]);
   }
 
-  function isModifiedDefault(courseId) {
-    // A default course that was edited (removed from defaults, re-added as custom with same id)
-    return removedIds.includes(courseId) && customCourses.some(c => c.id === courseId);
-  }
-
-  return { courses, totalCUs, addCourse, updateCourse, removeCourse, resetToDefaults, isCustom, isModifiedDefault };
+  return { courses, totalCUs, addCourse, updateCourse, removeCourse, loadPreset, clearAll };
 }

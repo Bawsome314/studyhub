@@ -4,89 +4,11 @@ import { Palette, User, Download, Upload, FileJson, BookOpen, Cloud, Copy, Check
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { useCourses } from '../hooks/useCourses';
-import sampleGuide from '../data/sampleGuide.json';
+import { useCourses, WGU_FINANCE_COURSES } from '../hooks/useCourses';
 import AuthSection from '../components/AuthSection';
 import { putGuide, deleteGuide as deleteGuideIDB, getStorageEstimate } from '../lib/indexedDB';
 import { updateGuideIndex, removeFromGuideIndex, readGuideIndex } from '../lib/guideIndex';
-
-const TEMPLATE_JSON = `{
-  "courseId": "COURSE_ID_HERE",
-  "courseName": "Full Course Name",
-  "courseCode": "CODE",
-  "tools": ["finance"],
-  "units": [
-    {
-      "id": "unit-1",
-      "name": "Unit 1: Unit Name",
-      "cards": [
-        {
-          "id": "c1-1",
-          "term": "Term",
-          "definition": "Detailed definition.",
-          "question": "Scenario-based question testing this concept?",
-          "choices": ["A", "B", "C", "D"],
-          "correctIndex": 0,
-          "explanation": "Why this answer is correct."
-        }
-      ],
-      "matchPairs": [
-        { "id": "m1-1", "term": "Term", "definition": "Short definition for match card" }
-      ]
-    }
-  ],
-  "extraQuestions": [
-    { "id": "eq-1", "question": "Cross-unit question?", "choices": ["A","B","C","D"], "correctIndex": 0, "explanation": "Why." }
-  ],
-  "mockPool": [
-    { "id": "mk-1", "question": "Hard OA-caliber scenario question?", "choices": ["A","B","C","D"], "correctIndex": 0, "explanation": "Why." }
-  ],
-  "trueFalsePool": [
-    { "id": "tf-1", "statement": "A statement that is true or false.", "correct": true, "explanation": "Why this is true/false." }
-  ],
-  "fillInBlankPool": [
-    { "id": "fb-1", "sentence": "The _____ is the process of recording transactions.", "answer": "journal entry", "distractors": ["ledger","trial balance","worksheet"] }
-  ]
-}`;
-
-function buildClaudePrompt(courses) {
-  const courseList = courses.map(c => `- ${c.code} ${c.name} (id: "${c.id}")`).join('\n');
-
-  return `Generate a comprehensive study guide JSON for a WGU course. I'll tell you which course — pick one from this list or I'll specify:
-
-${courseList}
-
-**Output ONLY valid JSON** matching this exact schema:
-
-${TEMPLATE_JSON}
-
-**Schema details:**
-
-**Per unit:**
-- \`cards\`: Each card has a term, detailed definition, AND a built-in scenario question with 4 choices. Every card IS a question. Each unit should have enough cards to cover every key term, concept, model, framework, law, and theory in that unit. No concept that could appear on the OA should be left out. Some units will have 10 cards, some might have 25 — whatever it takes to be thorough.
-- \`matchPairs\` (8-12 per unit): Term-definition pairs with SHORT definitions (max 40 chars) that fit match game tiles
-
-**Course-level pools:**
-- \`mockPool\` (100-120): **This is the most important pool.** Hardest OA-caliber questions — longer scenarios, closer distractors, multi-step reasoning. Should be big enough to take the Practice OA (40 questions) 2-3 times without significant overlap. This is the priority.
-- \`extraQuestions\` (30-40): Cross-unit supplemental questions for Rapid Fire and drills
-- \`trueFalsePool\` (20-30): Statements with \`correct\` boolean + \`explanation\`. Mix true and false ~50/50
-- \`fillInBlankPool\` (20-30): Sentences with a blank (use _____ for the blank), \`answer\` (the correct term), and 3 \`distractors\`
-
-**Optional top-level fields:**
-- \`tools\`: An optional array declaring which floating toolbar tools the course needs. Valid values: \`"finance"\` (TVM calculator), \`"graph"\` (Desmos graphing calculator), \`"accounting"\` (T-account template). Include only the tools relevant to the course content.
-
-**Requirements:**
-- The guide should be comprehensive enough to pass the OA using no other study materials. If a concept could appear on the exam, it needs to be in here. Every definition should be detailed enough that someone could learn the concept from it alone without a textbook.
-- courseId must match the "id" field from the list above (lowercase, e.g. "d196")
-- IDs: units = "unit-1"..., cards = "c1-1"..., matchPairs = "m1-1"..., extraQuestions = "eq-1"..., mockPool = "mk-1"..., trueFalsePool = "tf-1"..., fillInBlankPool = "fb-1"...
-- Distribute correctIndex evenly across 0-3 positions
-- Target WGU OA exam difficulty level
-- Make the mockPool deep enough for 2-3 unique Practice OA sessions
-
-**Question quality:** Write realistic exam questions. Answer choices should look like they would on a real WGU proctored OA. Don't attach explanations or definitions to the correct answer that aren't also present on the wrong answers. The correct answer should not be identifiable by its format, length, or level of detail alone. Some questions will have short term-only choices, some will have longer descriptions — vary it naturally. Just make sure a test-taking student couldn't game the answers without knowing the material.
-
-Which course should I generate?`;
-}
+import buildClaudePrompt from '../lib/buildClaudePrompt';
 
 export default function Settings() {
   const { theme, setTheme, themes } = useTheme();
@@ -102,7 +24,7 @@ export default function Settings() {
   const fileInputRef = useRef(null);
   const [copied, setCopied] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
-  const { courses, totalCUs, addCourse, updateCourse, removeCourse, resetToDefaults, isCustom } = useCourses();
+  const { courses, totalCUs, addCourse, updateCourse, removeCourse, loadPreset, clearAll } = useCourses();
   const [coursesExpanded, setCoursesExpanded] = useState(false);
   const [courseFormOpen, setCourseFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
@@ -317,8 +239,10 @@ export default function Settings() {
             className="w-full flex items-center justify-between px-5 py-4 hover:bg-bg-hover transition-colors"
           >
             <span className="text-xs text-text-secondary">
-              <span className="font-num font-semibold text-text-primary">{courses.length}</span> courses &middot; <span className="font-num font-semibold text-text-primary">{totalCUs}</span> CUs
-              {isCustom && <span className="ml-2 text-[10px] text-accent">(customized)</span>}
+              {courses.length > 0
+                ? <><span className="font-num font-semibold text-text-primary">{courses.length}</span> courses &middot; <span className="font-num font-semibold text-text-primary">{totalCUs}</span> CUs</>
+                : 'No courses added yet'
+              }
             </span>
             <ChevronDown className={`w-4 h-4 text-text-muted transition-transform duration-200 ${coursesExpanded ? 'rotate-180' : ''}`} />
           </button>
@@ -338,11 +262,19 @@ export default function Settings() {
                   <Plus className="w-3.5 h-3.5" /> Add Course
                 </button>
                 <button
-                  onClick={() => setConfirmAction({ type: 'reset-courses' })}
+                  onClick={() => loadPreset(WGU_FINANCE_COURSES)}
                   className="flex items-center gap-2 px-3 py-2 border border-border rounded-lg text-xs text-text-primary hover:bg-bg-hover transition-colors"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" /> Reset to Defaults
+                  <GraduationCap className="w-3.5 h-3.5" /> Load WGU BS Finance
                 </button>
+                {courses.length > 0 && (
+                  <button
+                    onClick={() => setConfirmAction({ type: 'clear-courses' })}
+                    className="flex items-center gap-2 px-3 py-2 border border-border rounded-lg text-xs text-text-muted hover:text-danger hover:border-danger/30 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Clear All
+                  </button>
+                )}
               </div>
 
               {/* Course list grouped by category */}
@@ -395,13 +327,13 @@ export default function Settings() {
           <h2 className="text-sm font-semibold text-text-primary">Study Guide Import</h2>
         </div>
         <div className="bg-bg-secondary rounded-xl border border-border p-5 space-y-4">
-          <p className="text-[11px] text-text-muted">Generate a study guide with Claude, upload a JSON file, or load the built-in sample.</p>
+          <p className="text-[11px] text-text-muted">Generate a study guide with Claude or upload a JSON file.</p>
 
           {/* Action buttons row */}
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => {
-                const prompt = buildClaudePrompt(courses);
+                const prompt = buildClaudePrompt();
                 navigator.clipboard.writeText(prompt);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
@@ -415,24 +347,6 @@ export default function Settings() {
               <FileJson className="w-3.5 h-3.5" /> Upload JSON
               <input ref={fileInputRef} type="file" accept=".json" onChange={handleStudyGuideImport} className="hidden" />
             </label>
-            <button
-              disabled={importing}
-              onClick={async () => {
-                setImporting(true);
-                setImportStatus('');
-                try {
-                  await putGuide(sampleGuide);
-                  updateGuideIndex(sampleGuide);
-                  setImportStatus(`Sample guide loaded for ${sampleGuide.courseCode}!`);
-                } catch {
-                  setImportStatus('Failed to load sample guide. Storage may be unavailable.');
-                }
-                setImporting(false);
-              }}
-              className="flex items-center gap-2 px-3 py-2 border border-border rounded-lg text-xs text-text-primary hover:bg-bg-hover transition-colors disabled:opacity-40"
-            >
-              <BookOpen className="w-3.5 h-3.5" /> Load Sample
-            </button>
           </div>
 
           {/* Paste JSON */}
@@ -627,12 +541,12 @@ export default function Settings() {
       />
 
       <ConfirmDialog
-        open={confirmAction?.type === 'reset-courses'}
-        title="Reset to default courses?"
-        message="This will remove any custom courses you added and restore the original WGU Finance course list. Saved progress data will not be deleted."
-        confirmLabel="Reset"
-        confirmColor="bg-warning"
-        onConfirm={() => { resetToDefaults(); setConfirmAction(null); }}
+        open={confirmAction?.type === 'clear-courses'}
+        title="Clear all courses?"
+        message="This will remove all courses from your list. Saved progress, notes, and study guides will not be deleted."
+        confirmLabel="Clear All"
+        confirmColor="bg-danger"
+        onConfirm={() => { clearAll(); setConfirmAction(null); }}
         onCancel={() => setConfirmAction(null)}
       />
     </div>

@@ -21,6 +21,7 @@ import {
 import { useStudyGuide, useCardProgress, useQuizHistory, useMissedQuestions, pickRandom, shuffleChoices, getDueCards } from '../../hooks/useStudyGuide';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { formatShortDate, getCourseReadiness, readinessColor, readinessTextColor } from '../../utils/studyHelpers';
+import buildClaudePrompt from '../../lib/buildClaudePrompt';
 import QuizEngine from './QuizEngine';
 import Flashcards from './Flashcards';
 import RapidFire from './RapidFire';
@@ -60,14 +61,28 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
         <BookOpen className="w-10 h-10 text-text-muted mx-auto mb-3" />
         <h3 className="text-sm font-medium text-text-primary mb-1">No study guide loaded</h3>
         <p className="text-xs text-text-muted max-w-sm mx-auto mb-4">
-          Import a study guide to unlock study tools — flashcards, quizzes, match games, and more.
+          Generate a study guide with Claude or import one from Settings.
         </p>
-        <Link
-          to="/settings"
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-hover text-white text-xs font-medium rounded-lg transition-colors"
-        >
-          Go to Settings
-        </Link>
+        <div className="flex flex-wrap justify-center gap-2">
+          <button
+            onClick={() => {
+              const prompt = buildClaudePrompt({ code: courseCode, name: courseName, id: courseId });
+              navigator.clipboard.writeText(prompt);
+              setSummaryCopied(true);
+              setTimeout(() => setSummaryCopied(false), 2000);
+            }}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-hover text-white text-xs font-medium rounded-lg transition-colors"
+          >
+            {summaryCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {summaryCopied ? 'Copied!' : 'Generate Study Guide'}
+          </button>
+          <Link
+            to="/settings"
+            className="inline-flex items-center gap-1.5 px-4 py-2 border border-border text-text-secondary hover:text-text-primary text-xs font-medium rounded-lg transition-colors"
+          >
+            Import in Settings
+          </Link>
+        </div>
       </div>
     );
   }
