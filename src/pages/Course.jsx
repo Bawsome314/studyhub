@@ -22,15 +22,26 @@ const TABS_PA = [
   { id: 'files', icon: FileText, label: 'Files' },
 ];
 
+const TABS_CAPSTONE = [
+  { id: 'study-guide', icon: BookOpen, label: 'Study Guide' },
+  { id: 'tasks', icon: ClipboardCheck, label: 'Tasks' },
+  { id: 'notes', icon: StickyNote, label: 'Notes' },
+  { id: 'links', icon: Link2, label: 'Links' },
+  { id: 'files', icon: FileText, label: 'Files' },
+];
+
 export default function Course() {
   const { courseId } = useParams();
   const { courses } = useCourses();
   const course = courses.find(c => c.id === courseId);
-  const [activeTab, setActiveTab] = useState(course?.type === 'PA' ? 'tasks' : 'study-guide');
+  const isCapstone = course?.category === 'Capstone';
+  const [activeTab, setActiveTab] = useState(
+    isCapstone ? 'study-guide' : course?.type === 'PA' ? 'tasks' : 'study-guide'
+  );
 
   if (!course) return <Navigate to="/" replace />;
 
-  const tabs = course.type === 'PA' ? TABS_PA : TABS_OA;
+  const tabs = isCapstone ? TABS_CAPSTONE : course.type === 'PA' ? TABS_PA : TABS_OA;
 
   return (
     <div className="space-y-4">

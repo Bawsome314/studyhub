@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
+  Award,
   Cloud,
   CloudOff,
   RefreshCw,
@@ -86,6 +87,7 @@ function abbreviateName(name) {
 export default function Sidebar() {
   const [oaOpen, setOaOpen] = useState(true);
   const [paOpen, setPaOpen] = useState(true);
+  const [capOpen, setCapOpen] = useState(true);
   const [courseProgress] = useLocalStorage('studyhub-course-progress', {});
   const location = useLocation();
   const { user } = useAuth();
@@ -94,8 +96,10 @@ export default function Sidebar() {
   const [lastStudied] = useLocalStorage('studyhub-last-studied', {});
   const [profile] = useLocalStorage('studyhub-profile', {});
 
-  const oaCourses = courses.filter(c => c.type === 'OA');
-  const paCourses = courses.filter(c => c.type === 'PA');
+  const capstoneCourses = courses.filter(c => c.category === 'Capstone');
+  const capstoneIds = new Set(capstoneCourses.map(c => c.id));
+  const oaCourses = courses.filter(c => c.type === 'OA' && !capstoneIds.has(c.id));
+  const paCourses = courses.filter(c => c.type === 'PA' && !capstoneIds.has(c.id));
 
   const passedCUs = courses
     .filter(c => courseProgress[c.id]?.status === 'passed')
@@ -228,6 +232,53 @@ export default function Sidebar() {
               );
             })}
           </div>
+        )}
+
+        {/* Capstone Courses */}
+        {capstoneCourses.length > 0 && (
+          <>
+            <button
+              onClick={() => setCapOpen(!capOpen)}
+              className="flex items-center gap-2 w-full px-2 py-1.5 text-xs font-semibold text-text-muted uppercase tracking-wider hover:text-text-secondary transition-colors mt-2"
+            >
+              {capOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+              <Award className="w-3 h-3" />
+              Capstone
+              <span className="ml-auto font-num text-[10px]">
+                {capstoneCourses.filter(c => getCourseStatus(c.id) === 'passed').length}/{capstoneCourses.length}
+              </span>
+            </button>
+            {capOpen && (
+              <div className="space-y-0.5 ml-1">
+                {capstoneCourses.map(course => {
+                  const status = getCourseStatus(course.id);
+                  const readiness = getReadiness(course.id);
+                  const isActive = location.pathname === `/course/${course.id}`;
+                  return (
+                    <NavLink
+                      key={course.id}
+                      to={`/course/${course.id}`}
+                      title={`${course.code} ${course.name}`}
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
+                        isActive
+                          ? 'bg-accent-muted text-accent'
+                          : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
+                      }`}
+                    >
+                      <StatusDot status={status} />
+                      <span className="truncate flex-1">{course.code} {abbreviateName(course.name)}</span>
+                      {lastStudied[course.id] && (
+                        <span className="font-num text-[9px] text-text-muted/60">{timeAgo(lastStudied[course.id])}</span>
+                      )}
+                      {readiness > 0 && (
+                        <span className={`font-num text-[10px] ${readinessTextColor(readiness)}`}>{readiness}%</span>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
       </div>
 

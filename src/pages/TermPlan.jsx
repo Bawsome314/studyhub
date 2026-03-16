@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useCourses } from '../hooks/useCourses';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { CheckCircle2, Circle, Clock, ChevronRight, Search } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, ChevronRight, Search, GraduationCap, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { timeAgo, getBestPracticeOa, getCourseReadiness, readinessColor } from '../utils/studyHelpers';
 
@@ -44,6 +45,31 @@ export default function TermPlan() {
     .filter(c => courseProgress[c.id]?.status === 'passed')
     .reduce((sum, c) => sum + c.cus, 0);
   const passedCount = courses.filter(c => courseProgress[c.id]?.status === 'passed').length;
+
+  if (courses.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">Term Plan</h1>
+          <p className="text-sm text-text-secondary">Track your degree progress</p>
+        </div>
+        <div className="bg-bg-secondary rounded-xl border border-border p-10 text-center">
+          <GraduationCap className="w-12 h-12 text-text-muted/20 mx-auto mb-4" />
+          <h3 className="text-sm font-medium text-text-primary mb-1">No courses yet</h3>
+          <p className="text-xs text-text-muted max-w-sm mx-auto mb-4">
+            Add your courses in Settings to start tracking your degree progress. You can add them manually or load a preset program.
+          </p>
+          <Link
+            to="/settings"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-hover text-white text-xs font-medium rounded-lg transition-colors"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            Go to Settings
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -104,8 +130,8 @@ export default function TermPlan() {
               {categoryCourses.map(course => {
                 const status = courseProgress[course.id]?.status || 'not-started';
                 const studied = lastStudied[course.id];
-                const bestOa = course.type === 'OA' ? getBestPracticeOa(course.id) : null;
-                const readiness = course.type === 'OA' ? getCourseReadiness(course.id) : 0;
+                const bestOa = getBestPracticeOa(course.id);
+                const readiness = getCourseReadiness(course.id);
                 return (
                   <div
                     key={course.id}
@@ -135,7 +161,7 @@ export default function TermPlan() {
                       <p className="text-sm text-text-primary truncate">{course.name}</p>
                     </div>
                     {/* Readiness bar */}
-                    {course.type === 'OA' && readiness > 0 && (
+                    {readiness > 0 && (
                       <div className="flex items-center gap-1.5 shrink-0">
                         <div className="w-16 h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
                           <div className={`h-full rounded-full progress-fill ${readinessColor(readiness)}`} style={{ width: `${readiness}%` }} />
