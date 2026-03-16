@@ -2,6 +2,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Palette, User, Download, Upload, FileJson, BookOpen, Cloud, Copy, Check, HardDrive, GraduationCap, Plus, Pencil, Trash2, RotateCcw, X, ChevronDown } from 'lucide-react';
 import { useState, useRef, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useCourses } from '../hooks/useCourses';
 import sampleGuide from '../data/sampleGuide.json';
@@ -339,72 +340,6 @@ export default function Settings() {
                 </button>
               </div>
 
-              {/* Course form (add/edit) */}
-              {courseFormOpen && (
-                <div className="bg-bg-tertiary border border-border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-text-primary">{editingCourse ? 'Edit Course' : 'Add Course'}</p>
-                    <button onClick={() => setCourseFormOpen(false)} className="p-1 text-text-muted hover:text-text-primary transition-colors">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] text-text-muted block mb-1">Code</label>
-                      <input type="text" value={courseForm.code} onChange={e => setCourseForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} placeholder="C214"
-                        className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-text-muted block mb-1">CUs</label>
-                      <input type="number" min="1" max="12" value={courseForm.cus} onChange={e => setCourseForm(f => ({ ...f, cus: parseInt(e.target.value) || 1 }))}
-                        className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-text-muted block mb-1">Name</label>
-                    <input type="text" value={courseForm.name} onChange={e => setCourseForm(f => ({ ...f, name: e.target.value }))} placeholder="Financial Accounting"
-                      className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] text-text-muted block mb-1">Type</label>
-                      <select value={courseForm.type} onChange={e => setCourseForm(f => ({ ...f, type: e.target.value }))}
-                        className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent">
-                        <option value="OA">OA (Objective Assessment)</option>
-                        <option value="PA">PA (Performance Assessment)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-text-muted block mb-1">Category</label>
-                      <select value={courseForm.category} onChange={e => setCourseForm(f => ({ ...f, category: e.target.value }))}
-                        className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent">
-                        <option>General Education</option>
-                        <option>Business Core</option>
-                        <option>Finance Major</option>
-                        <option>Capstone</option>
-                        <option>Other</option>
-                      </select>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (!courseForm.code.trim() || !courseForm.name.trim()) return;
-                      if (editingCourse) {
-                        updateCourse(editingCourse, courseForm);
-                      } else {
-                        addCourse(courseForm);
-                      }
-                      setCourseFormOpen(false);
-                      setEditingCourse(null);
-                    }}
-                    disabled={!courseForm.code.trim() || !courseForm.name.trim()}
-                    className="px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-colors"
-                  >
-                    {editingCourse ? 'Save Changes' : 'Add Course'}
-                  </button>
-                </div>
-              )}
-
               {/* Course list grouped by category */}
               {(() => {
                 const categories = [...new Set(courses.map(c => c.category))];
@@ -564,6 +499,83 @@ export default function Settings() {
           )}
         </div>
       </section>
+
+      {/* Course add/edit modal */}
+      {courseFormOpen && createPortal(
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50" onClick={() => { setCourseFormOpen(false); setEditingCourse(null); }}>
+          <div className="bg-bg-secondary rounded-2xl border border-border p-5 w-full max-w-sm mx-4 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-text-primary">{editingCourse ? 'Edit Course' : 'Add Course'}</h3>
+              <button onClick={() => { setCourseFormOpen(false); setEditingCourse(null); }} className="p-1 text-text-muted hover:text-text-primary transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] text-text-muted block mb-1">Code</label>
+                <input type="text" value={courseForm.code} onChange={e => setCourseForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} placeholder="C214"
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
+              </div>
+              <div>
+                <label className="text-[10px] text-text-muted block mb-1">CUs</label>
+                <input type="number" min="1" max="12" value={courseForm.cus} onChange={e => setCourseForm(f => ({ ...f, cus: parseInt(e.target.value) || 1 }))}
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary font-num focus:outline-none focus:border-accent" />
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] text-text-muted block mb-1">Name</label>
+              <input type="text" value={courseForm.name} onChange={e => setCourseForm(f => ({ ...f, name: e.target.value }))} placeholder="Financial Accounting"
+                className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] text-text-muted block mb-1">Type</label>
+                <select value={courseForm.type} onChange={e => setCourseForm(f => ({ ...f, type: e.target.value }))}
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent">
+                  <option value="OA">OA (Objective Assessment)</option>
+                  <option value="PA">PA (Performance Assessment)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] text-text-muted block mb-1">Category</label>
+                <select value={courseForm.category} onChange={e => setCourseForm(f => ({ ...f, category: e.target.value }))}
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent">
+                  <option>General Education</option>
+                  <option>Business Core</option>
+                  <option>Finance Major</option>
+                  <option>Capstone</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-1">
+              <button
+                onClick={() => { setCourseFormOpen(false); setEditingCourse(null); }}
+                className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!courseForm.code.trim() || !courseForm.name.trim()) return;
+                  if (editingCourse) {
+                    updateCourse(editingCourse, courseForm);
+                  } else {
+                    addCourse(courseForm);
+                  }
+                  setCourseFormOpen(false);
+                  setEditingCourse(null);
+                }}
+                disabled={!courseForm.code.trim() || !courseForm.name.trim()}
+                className="px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-40 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                {editingCourse ? 'Save Changes' : 'Add Course'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       <ConfirmDialog
         open={confirmAction?.type === 'delete-guide'}
