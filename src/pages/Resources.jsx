@@ -19,7 +19,9 @@ import {
   Check,
   GripVertical,
   CornerLeftUp,
+  MoveRight,
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 const DEFAULT_DATA = {
   folders: [
@@ -187,6 +189,7 @@ export default function Resources() {
 
   const [nestTarget, setNestTarget] = useState(null);
   const nestTimerRef = useRef(null);
+  const [movingFolderId, setMovingFolderId] = useState(null);
 
   // Check if targetId is a descendant of parentId (prevents circular nesting)
   function isDescendant(parentId, targetId) {
@@ -269,6 +272,14 @@ export default function Resources() {
       ...prev,
       folders: prev.folders.map(f => f.id === folderId ? { ...f, parentId: null } : f),
     }));
+  }
+
+  function moveFolder(folderId, newParentId) {
+    setData(prev => ({
+      ...prev,
+      folders: prev.folders.map(f => f.id === folderId ? { ...f, parentId: newParentId } : f),
+    }));
+    setMovingFolderId(null);
   }
 
   function openFolder(folderId) {
@@ -370,8 +381,7 @@ export default function Resources() {
           <input
             type="text" placeholder="Folder name..." value={newFolderName}
             onChange={e => setNewFolderName(e.target.value)}
-            className="flex-1 bg-bg-secondary border border-accent/50 rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent"
-            autoFocus
+            className="flex-1 bg-bg-secondary border border-accent/50 rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent"
           />
           <button type="submit" disabled={!newFolderName.trim()} className="px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-40 text-white text-sm font-medium rounded-lg transition-colors">Create</button>
           <button type="button" onClick={() => setShowAddFolder(false)} className="p-2 text-text-muted hover:text-text-primary transition-colors"><X className="w-4 h-4" /></button>
@@ -383,11 +393,11 @@ export default function Resources() {
         <form onSubmit={addLink} className="bg-bg-secondary rounded-xl border border-accent/30 p-5 space-y-3">
           <p className="text-sm font-medium text-text-primary">Add a link</p>
           <input type="text" placeholder="Title" value={newLink.title} onChange={e => setNewLink(p => ({ ...p, title: e.target.value }))}
-            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" autoFocus />
+            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
           <input type="url" placeholder="https://..." value={newLink.url} onChange={e => setNewLink(p => ({ ...p, url: e.target.value }))}
-            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
+            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
           <input type="text" placeholder="Description (optional)" value={newLink.description} onChange={e => setNewLink(p => ({ ...p, description: e.target.value }))}
-            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
+            className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
           <div className="flex gap-2 justify-end pt-1">
             <button type="button" onClick={() => setShowAddLink(false)} className="px-3 py-1.5 text-sm text-text-muted hover:text-text-primary transition-colors">Cancel</button>
             <button type="submit" disabled={!newLink.title.trim() || !newLink.url.trim()} className="px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-40 text-white text-sm font-medium rounded-lg transition-colors">Add</button>
@@ -485,29 +495,27 @@ export default function Resources() {
                             <Icon className="w-5 h-5" />
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {folder.parentId !== null && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); moveToRoot(folder.id); }}
-                              className="p-1 rounded-md text-text-muted hover:text-accent hover:bg-accent/10 transition-all"
-                              title="Move to root"
-                            >
-                              <CornerLeftUp className="w-3 h-3" />
-                            </button>
-                          )}
+                        <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setMovingFolderId(folder.id); }}
+                            className="p-1.5 sm:p-1 rounded-md text-text-muted hover:text-accent hover:bg-accent/10 transition-all"
+                            title="Move to..."
+                          >
+                            <MoveRight className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
+                          </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); startRename(folder); }}
-                            className="p-1 rounded-md text-text-muted hover:text-accent hover:bg-accent/10 transition-all"
+                            className="p-1.5 sm:p-1 rounded-md text-text-muted hover:text-accent hover:bg-accent/10 transition-all"
                             title="Rename"
                           >
-                            <Pencil className="w-3 h-3" />
+                            <Pencil className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); setDeleteConfirm(deleteConfirm === folder.id ? null : folder.id); }}
-                            className="p-1 rounded-md text-text-muted hover:text-danger hover:bg-danger/10 transition-all"
+                            className="p-1.5 sm:p-1 rounded-md text-text-muted hover:text-danger hover:bg-danger/10 transition-all"
                             title="Delete"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                           </button>
                         </div>
                       </div>
@@ -525,8 +533,7 @@ export default function Resources() {
                             onChange={e => setRenameValue(e.target.value)}
                             onBlur={() => renameFolder(folder.id)}
                             onKeyDown={e => { if (e.key === 'Escape') { setRenamingId(null); } }}
-                            className="flex-1 bg-bg-primary border border-accent/50 rounded px-2 py-1 text-sm text-text-primary focus:outline-none focus:border-accent min-w-0"
-                            autoFocus
+                            className="flex-1 bg-bg-primary border border-accent/50 rounded px-2 py-1 text-[16px] sm:text-sm text-text-primary focus:outline-none focus:border-accent min-w-0"
                           />
                           <button type="submit" className="p-1 text-accent"><Check className="w-3.5 h-3.5" /></button>
                         </form>
@@ -576,7 +583,7 @@ export default function Resources() {
                       </a>
                       {link.description && <p className="text-xs text-text-muted mt-0.5 truncate">{link.description}</p>}
                     </div>
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
                       <a href={link.url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-text-muted hover:text-accent transition-colors">
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
@@ -605,6 +612,64 @@ export default function Resources() {
             </div>
           )}
         </>
+      )}
+
+      {/* Move folder modal */}
+      {movingFolderId && createPortal(
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50" onClick={() => setMovingFolderId(null)}>
+          <div className="bg-bg-secondary rounded-2xl border border-border p-5 w-full max-w-sm mx-4 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-text-primary">
+                Move "{folders.find(f => f.id === movingFolderId)?.name}"
+              </h3>
+              <button onClick={() => setMovingFolderId(null)} className="p-1 text-text-muted hover:text-text-primary transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {/* Move to root */}
+              {folders.find(f => f.id === movingFolderId)?.parentId !== null && (
+                <button
+                  onClick={() => moveFolder(movingFolderId, null)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-bg-hover transition-colors text-left"
+                >
+                  <CornerLeftUp className="w-4 h-4 text-text-muted shrink-0" />
+                  <span className="text-sm text-text-primary">Root (top level)</span>
+                </button>
+              )}
+              {/* Available destination folders */}
+              {folders
+                .filter(f => f.id !== movingFolderId && !isDescendant(movingFolderId, f.id))
+                .map(f => {
+                  const Icon = FOLDER_ICONS[f.icon] || Folder;
+                  const colorClass = getFolderColor(f.id);
+                  const isCurrent = f.id === folders.find(fo => fo.id === movingFolderId)?.parentId;
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => moveFolder(movingFolderId, f.id)}
+                      disabled={isCurrent}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                        isCurrent ? 'opacity-40 cursor-not-allowed' : 'hover:bg-bg-hover'
+                      }`}
+                    >
+                      <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${colorClass}`}>
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-text-primary truncate">{f.name}</p>
+                        {f.parentId && (
+                          <p className="text-[10px] text-text-muted truncate">{getFolderPath(f.parentId)}</p>
+                        )}
+                      </div>
+                      {isCurrent && <span className="text-[10px] text-text-muted shrink-0">Current</span>}
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

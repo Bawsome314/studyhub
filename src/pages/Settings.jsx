@@ -533,24 +533,24 @@ export default function Settings() {
               <div>
                 <label className="text-[10px] text-text-muted block mb-1">Code</label>
                 <input type="text" value={courseForm.code} onChange={e => setCourseForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} placeholder="C214"
-                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
               </div>
               <div>
                 <label className="text-[10px] text-text-muted block mb-1">CUs</label>
                 <input type="number" min="1" max="12" value={courseForm.cus} onChange={e => setCourseForm(f => ({ ...f, cus: parseInt(e.target.value) || 1 }))}
-                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary font-num focus:outline-none focus:border-accent" />
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary font-num focus:outline-none focus:border-accent" />
               </div>
             </div>
             <div>
               <label className="text-[10px] text-text-muted block mb-1">Name</label>
               <input type="text" value={courseForm.name} onChange={e => setCourseForm(f => ({ ...f, name: e.target.value }))} placeholder="Financial Accounting"
-                className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
+                className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] text-text-muted block mb-1">Type</label>
                 <select value={courseForm.type} onChange={e => setCourseForm(f => ({ ...f, type: e.target.value }))}
-                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent">
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary focus:outline-none focus:border-accent">
                   <option value="OA">OA (Objective Assessment)</option>
                   <option value="PA">PA (Performance Assessment)</option>
                 </select>
@@ -558,7 +558,7 @@ export default function Settings() {
               <div>
                 <label className="text-[10px] text-text-muted block mb-1">Category</label>
                 <select value={courseForm.category} onChange={e => setCourseForm(f => ({ ...f, category: e.target.value }))}
-                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent">
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary focus:outline-none focus:border-accent">
                   <option>General Education</option>
                   <option>Business Core</option>
                   <option>Finance Major</option>
