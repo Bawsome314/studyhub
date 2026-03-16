@@ -97,6 +97,7 @@ export default function Settings() {
     termEnd: '',
   });
   const [importStatus, setImportStatus] = useState('');
+  const [importing, setImporting] = useState(false);
   const [jsonPaste, setJsonPaste] = useState('');
   const fileInputRef = useRef(null);
   const [copied, setCopied] = useState(false);
@@ -151,12 +152,15 @@ export default function Settings() {
   function handleStudyGuideImport(e) {
     const file = e.target.files[0];
     if (!file) return;
+    setImporting(true);
+    setImportStatus('');
     const reader = new FileReader();
     reader.onload = async (ev) => {
       try {
         const guide = JSON.parse(ev.target.result);
         if (!guide.courseId || !guide.units) {
           setImportStatus('Invalid study guide format. Needs courseId and units.');
+          setImporting(false);
           return;
         }
         await putGuide(guide);
@@ -165,6 +169,7 @@ export default function Settings() {
       } catch {
         setImportStatus('Invalid JSON file.');
       }
+      setImporting(false);
     };
     reader.readAsText(file);
   }
@@ -411,7 +416,10 @@ export default function Settings() {
               <input ref={fileInputRef} type="file" accept=".json" onChange={handleStudyGuideImport} className="hidden" />
             </label>
             <button
+              disabled={importing}
               onClick={async () => {
+                setImporting(true);
+                setImportStatus('');
                 try {
                   await putGuide(sampleGuide);
                   updateGuideIndex(sampleGuide);
@@ -419,8 +427,9 @@ export default function Settings() {
                 } catch {
                   setImportStatus('Failed to load sample guide. Storage may be unavailable.');
                 }
+                setImporting(false);
               }}
-              className="flex items-center gap-2 px-3 py-2 border border-border rounded-lg text-xs text-text-primary hover:bg-bg-hover transition-colors"
+              className="flex items-center gap-2 px-3 py-2 border border-border rounded-lg text-xs text-text-primary hover:bg-bg-hover transition-colors disabled:opacity-40"
             >
               <BookOpen className="w-3.5 h-3.5" /> Load Sample
             </button>
@@ -435,23 +444,33 @@ export default function Settings() {
               className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-xs font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent resize-y" />
             <button
               onClick={async () => {
+                setImporting(true);
+                setImportStatus('');
                 try {
                   const guide = JSON.parse(jsonPaste);
-                  if (!guide.courseId || !guide.units) { setImportStatus('Invalid format.'); return; }
+                  if (!guide.courseId || !guide.units) { setImportStatus('Invalid format.'); setImporting(false); return; }
                   await putGuide(guide);
                   updateGuideIndex(guide);
                   setImportStatus(`Study guide for ${guide.courseId} imported!`);
                   setJsonPaste('');
                 } catch { setImportStatus('Invalid JSON.'); }
+                setImporting(false);
               }}
-              disabled={!jsonPaste.trim()}
+              disabled={!jsonPaste.trim() || importing}
               className="mt-1.5 px-3 py-1.5 bg-accent hover:bg-accent-hover disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-colors"
             >
               Import
             </button>
           </div>
 
-          {importStatus && <p className="text-xs text-success">{importStatus}</p>}
+          {/* Loading / status */}
+          {importing && (
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+              <div className="w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+              Importing study guide — this may take a moment for large files...
+            </div>
+          )}
+          {!importing && importStatus && <p className="text-xs text-success">{importStatus}</p>}
         </div>
       </section>
 

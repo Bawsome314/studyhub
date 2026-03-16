@@ -46,9 +46,10 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
 
   if (loading) {
     return (
-      <div className="bg-bg-secondary rounded-xl border border-border p-8 text-center">
-        <div className="inline-block w-6 h-6 border-2 border-accent/30 border-t-accent rounded-full animate-spin mb-3" />
-        <p className="text-sm text-text-muted">Loading study guide...</p>
+      <div className="bg-bg-secondary rounded-xl border border-border p-12 text-center">
+        <div className="inline-block w-8 h-8 border-[3px] border-accent/30 border-t-accent rounded-full animate-spin mb-4" />
+        <p className="text-sm font-medium text-text-primary">Loading study guide...</p>
+        <p className="text-xs text-text-muted mt-1">This may take a moment on mobile</p>
       </div>
     );
   }
