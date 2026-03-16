@@ -573,7 +573,7 @@ function buildStudySummary({ courseCode, courseName, guide, allCards, progress, 
   return lines.join('\n');
 }
 
-function BigToolCard({ icon: Icon, label, desc, meta, badge, badgeColor, disabled, onClick }) {
+function BigToolCard({ icon: Icon, label, desc, meta, badge, badgeColor, color, disabled, onClick }) {
   return (
     <button
       onClick={onClick}
