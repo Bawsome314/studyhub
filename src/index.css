@@ -83,6 +83,25 @@
   --color-sidebar: #eef2eb;
 }
 
+/* -- Lavender: Soft violet, dreamy and light -- */
+[data-theme="lavender"] {
+  --color-bg-primary: #f5f3ff;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #ede9fe;
+  --color-bg-hover: #ddd6fe;
+  --color-border: #c4b5fd;
+  --color-text-primary: #1e1b4b;
+  --color-text-secondary: #4338ca;
+  --color-text-muted: #7c73b8;
+  --color-accent: #7c6aef;
+  --color-accent-hover: #6955e0;
+  --color-accent-muted: rgba(124, 106, 239, 0.10);
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-sidebar: #faf8ff;
+}
+
 /* ═══ DARK THEMES ═══ */
 
 /* -- Dark: Standard dark mode, neutral grays, safe and clean -- */
@@ -159,6 +178,25 @@
   --color-warning: #ebcb8b;
   --color-danger: #bf616a;
   --color-sidebar: #282e3a;
+}
+
+/* -- Cyber: True black, electric green, terminal aesthetic -- */
+[data-theme="cyber"] {
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #141414;
+  --color-bg-tertiary: #1e1e1e;
+  --color-bg-hover: #2a2a2a;
+  --color-border: #333333;
+  --color-text-primary: #e0ffe0;
+  --color-text-secondary: #8fbc8f;
+  --color-text-muted: #5a7a5a;
+  --color-accent: #00ff41;
+  --color-accent-hover: #33ff66;
+  --color-accent-muted: rgba(0, 255, 65, 0.12);
+  --color-success: #00ff41;
+  --color-warning: #ffea00;
+  --color-danger: #ff3333;
+  --color-sidebar: #060606;
 }
 
 /* -- Custom: Fallback base (overridden by JS-applied inline vars) -- */
