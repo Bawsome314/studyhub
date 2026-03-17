@@ -21,8 +21,10 @@ import { Link } from 'react-router-dom';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useCourses } from '../hooks/useCourses';
 import { timeAgo, getBestPracticeOa, getCourseReadiness } from '../utils/studyHelpers';
+import AnimatedNumber from '../components/AnimatedNumber';
 
 function StatCard({ icon: Icon, label, value, color, fading }) {
+  const numericValue = typeof value === 'number' ? value : null;
   return (
     <div
       className="bg-bg-secondary rounded-xl border border-border p-4 flex items-center gap-4 card-shadow"
@@ -37,7 +39,9 @@ function StatCard({ icon: Icon, label, value, color, fading }) {
       </div>
       <div>
         <p className="text-text-muted text-[11px] tracking-wide">{label}</p>
-        <p className="text-xl font-bold font-num text-text-primary leading-tight">{value}</p>
+        <p className="text-xl font-bold font-num text-text-primary leading-tight">
+          {numericValue !== null ? <AnimatedNumber value={numericValue} /> : value}
+        </p>
       </div>
     </div>
   );

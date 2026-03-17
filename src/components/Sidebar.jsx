@@ -289,9 +289,10 @@ export default function Sidebar() {
           <span className="text-text-muted">Term Progress</span>
           <span className="font-num text-text-secondary">{passedCUs}/{displayCUs} CUs</span>
         </div>
-        <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden">
+        <div className="h-2.5 bg-bg-tertiary rounded-full overflow-hidden">
           <div
-            className="h-full bg-accent rounded-full transition-all duration-500"
+            className="h-full rounded-full transition-all duration-500"
+            style={{ background: 'linear-gradient(90deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 60%, var(--color-success)))' }}
             style={{ width: `${progressPct}%` }}
           />
         </div>
