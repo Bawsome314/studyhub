@@ -12,6 +12,7 @@ const TEMPLATE_JSON = `{
           "id": "c1-1",
           "term": "Term",
           "definition": "Detailed definition.",
+          "priority": "high",
           "question": "Scenario-based question testing this concept?",
           "choices": ["A", "B", "C", "D"],
           "correctIndex": 0,
@@ -28,6 +29,9 @@ const TEMPLATE_JSON = `{
   ],
   "mockPool": [
     { "id": "mk-1", "question": "Hard OA-caliber scenario question?", "choices": ["A","B","C","D"], "correctIndex": 0, "explanation": "Why." }
+  ],
+  "termIdPool": [
+    { "id": "ti-1", "scenario": "A manager notices team conflict is increasing productivity through debate.", "answer": "Functional conflict", "choices": ["Functional conflict","Dysfunctional conflict","Groupthink","Social loafing"], "correctIndex": 0, "explanation": "Why." }
   ],
   "trueFalsePool": [
     { "id": "tf-1", "statement": "A statement that is true or false.", "correct": true, "explanation": "Why this is true/false." }
@@ -51,11 +55,13 @@ ${TEMPLATE_JSON}
 **Schema details:**
 
 **Per unit:**
-- \`cards\`: Each card has a term, detailed definition, AND a built-in scenario question with 4 choices. Every card IS a question. Each unit should have enough cards to cover every key term, concept, model, framework, law, and theory in that unit. No concept that could appear on the OA should be left out. Some units will have 10 cards, some might have 25 — whatever it takes to be thorough.
+- \`cards\`: Each card has a term, detailed definition, a \`priority\` field, AND a built-in scenario question with 4 choices. Every card IS a question. Each unit should have enough cards to cover every key term, concept, model, framework, law, and theory in that unit. No concept that could appear on the OA should be left out. Some units will have 10 cards, some might have 25 — whatever it takes to be thorough.
+- \`priority\`: \`"high"\` = core concept very likely to appear on the OA (key theories, major frameworks, foundational terms). \`"normal"\` = standard exam material. \`"low"\` = supplementary/nice-to-know. Roughly 25-30% of cards should be high, 50-60% normal, 10-20% low. Be honest about what actually shows up on WGU OAs.
 - \`matchPairs\` (8-12 per unit): Term-definition pairs with SHORT definitions (max 40 chars) that fit match game tiles
 
 **Course-level pools:**
 - \`mockPool\` (100-120): **This is the most important pool.** Hardest OA-caliber questions — longer scenarios, closer distractors, multi-step reasoning. Should be big enough to take the Practice OA (40 questions) 2-3 times without significant overlap. This is the priority.
+- \`termIdPool\` (30-50): **"Which term is this?" questions.** Given a scenario or description, the student picks which concept/term/theory it describes. Format: \`scenario\` (the situation described), \`answer\` (the correct term), \`choices\` (4 term options), \`correctIndex\`, \`explanation\`. These should mirror the "identify the correct concept" style questions common on WGU OAs.
 - \`extraQuestions\` (30-40): Cross-unit supplemental questions for Rapid Fire and drills
 - \`trueFalsePool\` (20-30): Statements with \`correct\` boolean + \`explanation\`. Mix true and false ~50/50
 - \`fillInBlankPool\` (20-30): Sentences with a blank (use _____ for the blank), \`answer\` (the correct term), and 3 \`distractors\`
@@ -66,7 +72,7 @@ ${TEMPLATE_JSON}
 **Requirements:**
 - The guide should be comprehensive enough to pass the OA using no other study materials. If a concept could appear on the exam, it needs to be in here. Every definition should be detailed enough that someone could learn the concept from it alone without a textbook.
 - courseId must be lowercase (e.g. "d196")
-- IDs: units = "unit-1"..., cards = "c1-1"..., matchPairs = "m1-1"..., extraQuestions = "eq-1"..., mockPool = "mk-1"..., trueFalsePool = "tf-1"..., fillInBlankPool = "fb-1"...
+- IDs: units = "unit-1"..., cards = "c1-1"..., matchPairs = "m1-1"..., extraQuestions = "eq-1"..., mockPool = "mk-1"..., termIdPool = "ti-1"..., trueFalsePool = "tf-1"..., fillInBlankPool = "fb-1"...
 - Distribute correctIndex evenly across 0-3 positions
 - Target WGU OA exam difficulty level
 - Make the mockPool deep enough for 2-3 unique Practice OA sessions

@@ -19,6 +19,7 @@ import {
   Check,
   Users,
   Loader2,
+  Tag,
 } from 'lucide-react';
 import { useStudyGuide, useCardProgress, useQuizHistory, useMissedQuestions, pickRandom, shuffleChoices, getDueCards } from '../../hooks/useStudyGuide';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
@@ -38,7 +39,7 @@ import WeakSpotsView from './WeakSpotsView';
 export default function StudyGuideHub({ courseId, courseCode, courseName }) {
   const {
     guide, loading, allCards, allQuestions, allMatchPairs,
-    extraQuestions, mockPool, trueFalsePool, fillInBlankPool,
+    extraQuestions, mockPool, termIdPool, trueFalsePool, fillInBlankPool,
   } = useStudyGuide(courseId);
   const { progress } = useCardProgress(courseId);
   const { history, saveResult } = useQuizHistory(courseId);
@@ -130,6 +131,7 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
   const cardCount = allCards.length;
   const questionCount = examPool.length;
   const matchPairCount = allMatchPairs.length > 0 ? allMatchPairs.length : cardCount;
+  const termIdCount = termIdPool.length;
   const tfCount = trueFalsePool.length > 0 ? trueFalsePool.length : cardCount;
   const fibCount = fillInBlankPool.length > 0 ? fillInBlankPool.length : cardCount;
   const masteredCards = allCards.filter(c => progress[c.id]?.rating === 'got-it').length;
@@ -171,6 +173,13 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
       setQuizQuestions(shuffleChoices(pickRandom(drillPool, Math.min(15, drillPool.length))));
     } else if (toolId === 'practice-oa') {
       setQuizQuestions(shuffleChoices(pickRandom(examPool, Math.min(40, examPool.length))));
+    } else if (toolId === 'term-id') {
+      // Term ID uses its own pool, formatted as quiz questions
+      const termQuestions = termIdPool.map(t => ({
+        ...t,
+        question: t.scenario,
+      }));
+      setQuizQuestions(shuffleChoices(pickRandom(termQuestions, Math.min(20, termQuestions.length))));
     }
     setActiveTool(toolId);
     setLastStudied(prev => ({ ...prev, [courseId]: Date.now() }));
@@ -230,6 +239,16 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
   }
   if (activeTool === 'true-false') {
     return <TrueFalse cards={allCards} trueFalsePool={trueFalsePool} courseCode={courseCode} courseName={courseName} onExit={handleExit} onRecordMiss={recordMiss} onRecordCorrect={recordCorrect} />;
+  }
+  if (activeTool === 'term-id') {
+    return (
+      <QuizEngine
+        courseCode={courseCode} courseName={courseName}
+        type="Term ID" questions={quizQuestions}
+        timerMinutes={null} onExit={handleExit} onSaveResult={saveResult}
+        onRecordMiss={recordMiss} onRecordCorrect={recordCorrect}
+      />
+    );
   }
   if (activeTool === 'unit-summaries') {
     return <UnitSummaries courseId={courseId} guide={guide} onExit={handleExit} />;
@@ -398,6 +417,23 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
               onClick={() => startTool('match-game')}
             />
           </div>
+
+          {/* Term ID — only shows when termIdPool exists */}
+          {termIdCount > 0 && (
+            <button
+              onClick={() => startTool('term-id')}
+              className="w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all bg-bg-secondary border-border hover:border-indigo-400/30 hover:bg-bg-hover cursor-pointer card-shadow card-hover"
+            >
+              <div className="w-9 h-9 rounded-lg bg-indigo-500/15 flex items-center justify-center shrink-0">
+                <Tag className="w-4.5 h-4.5 text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-text-primary">Name That Term</p>
+                <p className="text-[11px] text-text-muted">Read a scenario, pick the concept</p>
+              </div>
+              <span className="text-[10px] font-num text-text-muted shrink-0">{termIdCount}</span>
+            </button>
+          )}
 
           {/* Rapid Fire — spans right column width */}
           <button

@@ -38,10 +38,16 @@ export function updateGuideIndex(guide) {
   if (hasQuestions || (guide.mockPool?.length > 0) || (guide.extraQuestions?.length > 0)) tools.push('quiz', 'mock-exam');
   if (hasCards) tools.push('match');
 
+  const allCards = units.flatMap(u => u.cards || []);
+  const highPriority = allCards.filter(c => c.priority === 'high').length;
+  const hasTermId = (guide.termIdPool?.length || 0) > 0;
+
   index[guide.courseId] = {
     courseCode: guide.courseCode || '',
     courseName: guide.courseName || '',
     totalCards,
+    highPriorityCount: highPriority,
+    hasTermId,
     unitCount: units.length,
     tools,
     toolbarTools: Array.isArray(guide.tools) ? guide.tools : [],

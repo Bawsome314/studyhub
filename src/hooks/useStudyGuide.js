@@ -50,10 +50,11 @@ export function useStudyGuide(courseId) {
 
     const extraQuestions = guide?.extraQuestions || [];
     const mockPool = guide?.mockPool || [];
+    const termIdPool = guide?.termIdPool || [];
     const trueFalsePool = guide?.trueFalsePool || [];
     const fillInBlankPool = guide?.fillInBlankPool || [];
 
-    return { allCards, allQuestions, allMatchPairs, extraQuestions, mockPool, trueFalsePool, fillInBlankPool };
+    return { allCards, allQuestions, allMatchPairs, extraQuestions, mockPool, termIdPool, trueFalsePool, fillInBlankPool };
   }, [guide]);
 
   return {
@@ -78,11 +79,15 @@ export function useCardProgress(courseId) {
 
   function getWeightedCards(cards) {
     // Weight: dont-know=5, shaky=3, got-it=1, unseen=4
+    // Priority multiplier: high=1.5, normal=1, low=0.6
     const weights = { 'dont-know': 5, shaky: 3, 'got-it': 1 };
+    const priorityMult = { high: 1.5, normal: 1, low: 0.6 };
     const weighted = [];
     for (const card of cards) {
       const p = progress[card.id];
-      const weight = p ? weights[p.rating] || 4 : 4;
+      const baseWeight = p ? weights[p.rating] || 4 : 4;
+      const mult = priorityMult[card.priority] || 1;
+      const weight = Math.max(1, Math.round(baseWeight * mult));
       for (let i = 0; i < weight; i++) weighted.push(card);
     }
     return shuffle(weighted);

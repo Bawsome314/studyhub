@@ -52,6 +52,16 @@ export async function shareCommunityGuide(guide, userId, displayName) {
   return { error: error?.message || null };
 }
 
+// Delete a community guide (RLS ensures only uploader can)
+export async function deleteCommunityGuide(courseCode) {
+  if (!isSupabaseConfigured() || !courseCode) return { error: 'Not configured' };
+  const { error } = await supabase
+    .from('community_guides')
+    .delete()
+    .eq('course_code', courseCode.toUpperCase());
+  return { error: error?.message || null };
+}
+
 // Check if a community guide exists for a course code (lightweight, no JSON)
 export async function checkCommunityGuide(courseCode) {
   if (!isSupabaseConfigured() || !courseCode) return null;

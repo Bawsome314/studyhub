@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { RotateCcw, ChevronLeft, ChevronRight, XCircle, HelpCircle, CheckCircle2, ArrowLeft, SlidersHorizontal, Clock } from 'lucide-react';
+import { RotateCcw, ChevronLeft, ChevronRight, XCircle, HelpCircle, CheckCircle2, ArrowLeft, SlidersHorizontal, Clock, Flame } from 'lucide-react';
 import { useCardProgress, shuffle, getDueCards } from '../../hooks/useStudyGuide';
 import useKeyboardShortcuts from '../../hooks/useKeyboardShortcuts';
 
@@ -14,6 +14,7 @@ const SORT_OPTIONS = [
   { id: 'shuffle', label: 'Shuffle' },
   { id: 'weakest', label: 'Weakest First' },
   { id: 'unrated', label: 'Unrated First' },
+  { id: 'priority', label: 'High Priority' },
 ];
 
 export default function Flashcards({ courseId, cards, onExit }) {
@@ -48,6 +49,9 @@ export default function Flashcards({ courseId, cards, onExit }) {
         const bRated = progress[b.id] ? 1 : 0;
         return aRated - bRated;
       });
+    } else if (sortMode === 'priority') {
+      const order = { high: 0, normal: 1, low: 2 };
+      sorted.sort((a, b) => (order[a.priority] ?? 1) - (order[b.priority] ?? 1));
     }
     // 'unit' = default order (as-is from data)
     return sorted;
@@ -192,7 +196,10 @@ export default function Flashcards({ courseId, cards, onExit }) {
         <div className="text-center max-w-lg">
           {!flipped ? (
             <>
-              <p className="text-xs text-text-muted mb-3 uppercase tracking-wider">Term</p>
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <p className="text-xs text-text-muted uppercase tracking-wider">Term</p>
+                {card.priority === 'high' && <Flame className="w-3 h-3 text-warning" title="High priority" />}
+              </div>
               <p className="text-lg font-semibold text-text-primary">{card.term}</p>
               {cardProgress && (
                 <span className={`inline-block mt-3 text-xs px-2 py-0.5 rounded-full ${

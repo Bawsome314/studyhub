@@ -13,7 +13,7 @@ import { updateGuideIndex, removeFromGuideIndex, readGuideIndex } from '../lib/g
 import buildClaudePrompt from '../lib/buildClaudePrompt';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { shareCommunityGuide, fetchAllCommunityGuides, fetchCommunityGuide } from '../lib/communityGuides';
+import { shareCommunityGuide, fetchAllCommunityGuides, fetchCommunityGuide, deleteCommunityGuide } from '../lib/communityGuides';
 
 export default function Settings() {
   const { theme, setTheme, themes, customConfig, setCustomConfig } = useTheme();
@@ -689,6 +689,14 @@ export default function Settings() {
                         <Share2 className="w-2.5 h-2.5" /> Share
                       </button>
                     )}
+                    {canShare && (
+                      <button
+                        onClick={() => setConfirmAction({ type: 'delete-community-guide', code: g.code })}
+                        className="text-[10px] text-text-muted hover:text-danger transition-colors shrink-0"
+                      >
+                        Unshare
+                      </button>
+                    )}
                     <button onClick={() => setConfirmAction({ type: 'reset-progress', id: g.courseId })} className="text-[10px] text-text-muted hover:text-warning transition-colors shrink-0">Reset Progress</button>
                     <button onClick={() => setConfirmAction({ type: 'delete-guide', id: g.courseId })} className="text-[10px] text-text-muted hover:text-danger transition-colors shrink-0">Delete</button>
                   </div>
@@ -848,6 +856,21 @@ export default function Settings() {
             setImportStatus('Failed to share guide.');
           }
           setImporting(false);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmAction?.type === 'delete-community-guide'}
+        title={`Remove ${confirmAction?.code} from community?`}
+        message="This will delete the shared guide so other students can no longer load it. Your local copy is not affected."
+        confirmLabel="Remove"
+        confirmColor="bg-danger"
+        onConfirm={async () => {
+          const action = confirmAction;
+          setConfirmAction(null);
+          const { error: delErr } = await deleteCommunityGuide(action.code);
+          setImportStatus(delErr ? `Failed to remove: ${delErr}` : `${action.code} removed from community.`);
         }}
         onCancel={() => setConfirmAction(null)}
       />
