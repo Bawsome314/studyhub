@@ -39,20 +39,45 @@ export default function Settings() {
   const { user } = useAuth();
   const canShare = isSupabaseConfigured() && !!user;
 
-  // Community guides browse
-  const [communityGuides, setCommunityGuides] = useState([]);
-  const [communityLoading, setCommunityLoading] = useState(false);
-  const [communityLoaded, setCommunityLoaded] = useState(false);
+  // Community guides: auto-find available guides for user's courses
+  const [communityAvailable, setCommunityAvailable] = useState([]);
+  const [communityChecked, setCommunityChecked] = useState(false);
+  const [communitySearch, setCommunitySearch] = useState('');
+  const [communitySearchResults, setCommunitySearchResults] = useState([]);
+  const [communitySearching, setCommunitySearching] = useState(false);
 
-  function loadCommunityList() {
-    if (communityLoaded || !isSupabaseConfigured()) return;
-    setCommunityLoading(true);
-    fetchAllCommunityGuides().then(data => {
-      setCommunityGuides(data);
-      setCommunityLoading(false);
-      setCommunityLoaded(true);
-    }).catch(() => setCommunityLoading(false));
-  }
+  // Auto-check on mount: which of user's courses have community guides but no local guide
+  useEffect(() => {
+    if (!isSupabaseConfigured() || courses.length === 0 || communityChecked) return;
+    const missingCodes = courses
+      .filter(c => !guideLoadedSet.has(c.id))
+      .map(c => c.code.toUpperCase());
+    if (missingCodes.length === 0) { setCommunityChecked(true); return; }
+    fetchAllCommunityGuides().then(all => {
+      const missingSet = new Set(missingCodes);
+      setCommunityAvailable(all.filter(g => missingSet.has(g.course_code)));
+      setCommunityChecked(true);
+    }).catch(() => setCommunityChecked(true));
+  }, [courses, guideLoadedSet, communityChecked]);
+
+  // Search community guides
+  useEffect(() => {
+    if (!communitySearch.trim() || !isSupabaseConfigured()) {
+      setCommunitySearchResults([]);
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setCommunitySearching(true);
+      fetchAllCommunityGuides().then(all => {
+        const q = communitySearch.toLowerCase();
+        setCommunitySearchResults(all.filter(g =>
+          g.course_code.toLowerCase().includes(q) || g.course_name.toLowerCase().includes(q)
+        ));
+        setCommunitySearching(false);
+      }).catch(() => setCommunitySearching(false));
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [communitySearch]);
 
   function handleExport() {
     try {
@@ -487,68 +512,73 @@ export default function Settings() {
             <Users className="w-4 h-4 text-accent" />
             <h2 className="text-sm font-semibold text-text-primary">Community Guides</h2>
           </div>
-          <div className="bg-bg-secondary rounded-xl border border-border overflow-hidden">
-            <button
-              onClick={loadCommunityList}
-              className="w-full flex items-center justify-between px-5 py-4 hover:bg-bg-hover transition-colors"
-            >
-              <span className="text-xs text-text-secondary">
-                {communityLoaded
-                  ? <><span className="font-num font-semibold text-text-primary">{communityGuides.length}</span> guides shared by the community</>
-                  : 'Browse study guides shared by other students'
-                }
-              </span>
-              <ChevronDown className={`w-4 h-4 text-text-muted transition-transform duration-200 ${communityLoaded ? 'rotate-180' : ''}`} />
-            </button>
-
-            {communityLoading && (
-              <div className="px-5 pb-4 flex items-center gap-2 text-xs text-text-muted">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading community guides...
+          <div className="bg-bg-secondary rounded-xl border border-border p-5 space-y-4">
+            {/* Available for your courses */}
+            {communityAvailable.length > 0 && (
+              <div>
+                <p className="text-[10px] text-text-muted uppercase tracking-wider mb-2">Available for your courses</p>
+                <div className="space-y-1.5">
+                  {communityAvailable.map(g => (
+                    <CommunityGuideRow key={g.course_code} g={g} importing={importing} onLoad={async () => {
+                      setImporting(true);
+                      setImportStatus('');
+                      try {
+                        const full = await fetchCommunityGuide(g.course_code);
+                        if (full?.guide_json) {
+                          await putGuide(full.guide_json);
+                          updateGuideIndex(full.guide_json);
+                          setCommunityAvailable(prev => prev.filter(x => x.course_code !== g.course_code));
+                          setImportStatus(`Loaded ${g.course_code} from community!`);
+                        }
+                      } catch { setImportStatus('Failed to load community guide.'); }
+                      setImporting(false);
+                    }} />
+                  ))}
+                </div>
               </div>
             )}
+            {communityChecked && communityAvailable.length === 0 && !communitySearch.trim() && (
+              <p className="text-xs text-text-muted">No community guides available for your courses right now.</p>
+            )}
 
-            {communityLoaded && (
-              <div className="px-5 pb-5 border-t border-border pt-4 accordion-enter">
-                {communityGuides.length === 0 ? (
-                  <p className="text-xs text-text-muted text-center py-4">No community guides shared yet. Be the first!</p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {communityGuides.map(g => (
-                      <div key={g.course_code} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-bg-hover">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono text-accent font-semibold">{g.course_code}</span>
-                            <span className="text-xs text-text-primary truncate">{g.course_name}</span>
-                          </div>
-                          <p className="text-[10px] text-text-muted">
-                            {g.card_count} cards · {g.unit_count} units · by {g.uploader_name}
-                          </p>
-                        </div>
-                        <button
-                          onClick={async () => {
-                            setImporting(true);
-                            setImportStatus('');
-                            try {
-                              const full = await fetchCommunityGuide(g.course_code);
-                              if (full?.guide_json) {
-                                await putGuide(full.guide_json);
-                                updateGuideIndex(full.guide_json);
-                                setImportStatus(`Loaded ${g.course_code} from community!`);
-                              }
-                            } catch {
-                              setImportStatus('Failed to load community guide.');
-                            }
-                            setImporting(false);
-                          }}
-                          disabled={importing}
-                          className="px-3 py-1.5 bg-accent hover:bg-accent-hover disabled:opacity-40 text-white text-[10px] font-medium rounded-lg transition-colors shrink-0"
-                        >
-                          Load
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted" />
+              <input
+                type="text"
+                placeholder="Search all community guides..."
+                value={communitySearch}
+                onChange={e => setCommunitySearch(e.target.value)}
+                className="w-full bg-bg-tertiary border border-border rounded-lg pl-8 pr-3 py-2 text-[16px] sm:text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent"
+              />
+            </div>
+
+            {/* Search results */}
+            {communitySearching && (
+              <div className="flex items-center gap-2 text-xs text-text-muted">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Searching...
+              </div>
+            )}
+            {communitySearch.trim() && !communitySearching && communitySearchResults.length === 0 && (
+              <p className="text-xs text-text-muted text-center py-2">No community guides found for "{communitySearch}"</p>
+            )}
+            {communitySearchResults.length > 0 && (
+              <div className="space-y-1.5">
+                {communitySearchResults.map(g => (
+                  <CommunityGuideRow key={g.course_code} g={g} importing={importing} onLoad={async () => {
+                    setImporting(true);
+                    setImportStatus('');
+                    try {
+                      const full = await fetchCommunityGuide(g.course_code);
+                      if (full?.guide_json) {
+                        await putGuide(full.guide_json);
+                        updateGuideIndex(full.guide_json);
+                        setImportStatus(`Loaded ${g.course_code} from community!`);
+                      }
+                    } catch { setImportStatus('Failed to load community guide.'); }
+                    setImporting(false);
+                  }} />
+                ))}
               </div>
             )}
           </div>
@@ -768,6 +798,29 @@ export default function Settings() {
         }}
         onCancel={() => setConfirmAction(null)}
       />
+    </div>
+  );
+}
+
+function CommunityGuideRow({ g, importing, onLoad }) {
+  return (
+    <div className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-bg-hover">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono text-accent font-semibold">{g.course_code}</span>
+          <span className="text-xs text-text-primary truncate">{g.course_name}</span>
+        </div>
+        <p className="text-[10px] text-text-muted">
+          {g.card_count} cards · {g.unit_count} units · by {g.uploader_name}
+        </p>
+      </div>
+      <button
+        onClick={onLoad}
+        disabled={importing}
+        className="px-3 py-1.5 bg-accent hover:bg-accent-hover disabled:opacity-40 text-white text-[10px] font-medium rounded-lg transition-colors shrink-0"
+      >
+        Load
+      </button>
     </div>
   );
 }
