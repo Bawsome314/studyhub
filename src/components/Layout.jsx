@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
@@ -89,6 +89,10 @@ Academic outcomes are not guaranteed. Use this tool at your own risk and always 
 export default function Layout() {
   const location = useLocation();
   const [footerModal, setFooterModal] = useState(null);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-bg-primary">
