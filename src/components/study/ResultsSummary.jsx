@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Copy, Check, RotateCcw, Trophy } from 'lucide-react';
+import { Copy, Check, RotateCcw, Trophy, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { formatDateTime } from '../../utils/studyHelpers';
 
-export default function ResultsSummary({ courseCode, courseName, type, score, total, unitBreakdown, missed, onRestart, onExit }) {
+export default function ResultsSummary({ courseCode, courseName, type, score, total, unitBreakdown, missed, reviewQuestions, onRestart, onExit }) {
   const [copied, setCopied] = useState(false);
+  const [reviewMode, setReviewMode] = useState(false);
+  const [reviewIndex, setReviewIndex] = useState(0);
   const pct = Math.round((score / total) * 100);
 
   function formatForClipboard() {
@@ -53,6 +55,64 @@ export default function ResultsSummary({ courseCode, courseName, type, score, to
 
   const grade = pct >= 90 ? 'Excellent!' : pct >= 80 ? 'Great job!' : pct >= 70 ? 'Good effort!' : pct >= 60 ? 'Getting there!' : 'Keep studying!';
   const gradeColor = pct >= 80 ? 'text-success' : pct >= 60 ? 'text-warning' : 'text-danger';
+
+  // Review mode — step through every question
+  if (reviewMode && reviewQuestions?.length > 0) {
+    const q = reviewQuestions[reviewIndex];
+    const isCorrect = q.userAnswer === q.correctIndex;
+    return (
+      <div className="space-y-5">
+        <div className="flex items-center justify-between">
+          <button onClick={() => setReviewMode(false)} className="text-xs text-text-muted hover:text-text-primary transition-colors">&larr; Back to results</button>
+          <span className="text-xs font-num text-text-muted">{reviewIndex + 1} / {reviewQuestions.length}</span>
+        </div>
+
+        <div className="bg-bg-tertiary rounded-xl p-5">
+          <p className="text-sm text-text-primary mb-4">{q.question}</p>
+          <div className="space-y-2">
+            {q.choices.map((choice, ci) => {
+              const isUserPick = ci === q.userAnswer;
+              const isAnswer = ci === q.correctIndex;
+              let cls = 'border-border text-text-secondary';
+              if (isAnswer) cls = 'border-success/50 bg-success/10 text-success';
+              else if (isUserPick && !isCorrect) cls = 'border-danger/50 bg-danger/10 text-danger';
+              return (
+                <div key={ci} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs ${cls}`}>
+                  <span className="font-num font-semibold w-4 shrink-0">{ci + 1}.</span>
+                  <span className="flex-1">{choice}</span>
+                  {isAnswer && <Check className="w-3.5 h-3.5 text-success shrink-0" />}
+                  {isUserPick && !isCorrect && <span className="text-[10px] text-danger shrink-0">Your answer</span>}
+                </div>
+              );
+            })}
+          </div>
+          {q.explanation && (
+            <p className="text-xs text-text-muted mt-3 italic border-t border-border pt-3">{q.explanation}</p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setReviewIndex(i => Math.max(0, i - 1))}
+            disabled={reviewIndex === 0}
+            className="flex items-center gap-1 px-3 py-2 text-xs text-text-secondary hover:text-text-primary disabled:opacity-30 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" /> Previous
+          </button>
+          <span className={`text-xs font-medium ${isCorrect ? 'text-success' : 'text-danger'}`}>
+            {isCorrect ? 'Correct' : 'Incorrect'}
+          </span>
+          <button
+            onClick={() => setReviewIndex(i => Math.min(reviewQuestions.length - 1, i + 1))}
+            disabled={reviewIndex === reviewQuestions.length - 1}
+            className="flex items-center gap-1 px-3 py-2 text-xs text-text-secondary hover:text-text-primary disabled:opacity-30 transition-colors"
+          >
+            Next <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -112,12 +172,21 @@ export default function ResultsSummary({ courseCode, courseName, type, score, to
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3">
+        {reviewQuestions?.length > 0 && (
+          <button
+            onClick={() => { setReviewMode(true); setReviewIndex(0); }}
+            className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+            Review All
+          </button>
+        )}
         <button
           onClick={handleCopy}
-          className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-bg-tertiary hover:bg-bg-hover text-text-primary text-sm font-medium rounded-lg transition-colors border border-border"
         >
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          {copied ? 'Copied!' : 'Copy to Clipboard'}
+          {copied ? 'Copied!' : 'Copy Results'}
         </button>
         <button
           onClick={onRestart}

@@ -142,6 +142,15 @@ export default function QuizEngine({
       }
     }
 
+    const reviewQuestions = questions.map(q => ({
+      question: q.question,
+      choices: q.choices,
+      correctIndex: q.correctIndex,
+      userAnswer: answers[q.id],
+      explanation: q.explanation,
+      unitName: q.unitName || 'General',
+    }));
+
     return (
       <ResultsSummary
         courseCode={courseCode}
@@ -151,6 +160,7 @@ export default function QuizEngine({
         total={questions.length}
         unitBreakdown={Object.values(unitMap)}
         missed={missed}
+        reviewQuestions={reviewQuestions}
         onRestart={() => {
           setCurrentIndex(0);
           setAnswers({});

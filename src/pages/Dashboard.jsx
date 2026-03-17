@@ -13,6 +13,9 @@ import {
   Check,
   AlertTriangle,
   Play,
+  BookOpen,
+  Settings,
+  Sparkles,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLocalStorage } from '../hooks/useLocalStorage';
@@ -280,6 +283,59 @@ export default function Dashboard() {
     }
     return items.sort((a, b) => b.time - a.time).slice(0, 6);
   }, [courses]);
+
+  // Empty state for new users
+  if (courses.length === 0) {
+    return (
+      <div className="space-y-6 stagger-in">
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">
+            Welcome to <span className="text-gradient">StudyHub</span>
+          </h1>
+          <p className="text-text-secondary text-sm mt-1">Your personal study companion. Let's get you set up.</p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Link to="/settings" className="bg-bg-secondary rounded-xl border border-border p-5 card-shadow card-hover group">
+            <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center mb-3">
+              <GraduationCap className="w-5 h-5 text-accent" />
+            </div>
+            <p className="text-sm font-semibold text-text-primary mb-1 flex items-center gap-1">
+              Add your courses <ArrowRight className="w-3.5 h-3.5 text-text-muted group-hover:text-accent transition-colors" />
+            </p>
+            <p className="text-xs text-text-muted">Add courses manually or load a preset program like WGU BS Finance.</p>
+          </Link>
+
+          <div className="bg-bg-secondary rounded-xl border border-border p-5 card-shadow">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/15 flex items-center justify-center mb-3">
+              <BookOpen className="w-5 h-5 text-purple-400" />
+            </div>
+            <p className="text-sm font-semibold text-text-primary mb-1">Import a study guide</p>
+            <p className="text-xs text-text-muted">Generate one with Claude or load a community guide from Settings.</p>
+          </div>
+
+          <div className="bg-bg-secondary rounded-xl border border-border p-5 card-shadow">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center mb-3">
+              <Sparkles className="w-5 h-5 text-emerald-400" />
+            </div>
+            <p className="text-sm font-semibold text-text-primary mb-1">Start studying</p>
+            <p className="text-xs text-text-muted">Flashcards, quizzes, match games, and practice OAs — all with keyboard shortcuts.</p>
+          </div>
+        </div>
+
+        <div className="bg-bg-secondary rounded-xl border border-border p-5 card-shadow text-center">
+          <p className="text-xs text-text-muted mb-3">Ready to go?</p>
+          <Link
+            to="/settings"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors btn-press"
+          >
+            <Settings className="w-4 h-4" />
+            Open Settings
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 stagger-in">

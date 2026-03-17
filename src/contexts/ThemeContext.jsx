@@ -110,9 +110,14 @@ const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
   const [theme, setThemeRaw] = useState(() => {
-    const stored = localStorage.getItem('studyhub-theme') || 'midnight';
-    const validIds = [...THEMES.map(t => t.id), 'custom'];
-    return validIds.includes(stored) ? stored : 'dark';
+    const stored = localStorage.getItem('studyhub-theme');
+    if (stored) {
+      const validIds = [...THEMES.map(t => t.id), 'custom'];
+      return validIds.includes(stored) ? stored : 'dark';
+    }
+    // First visit — respect system preference
+    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+    return prefersDark ? 'midnight' : 'light';
   });
 
   const [customConfig, setCustomConfigRaw] = useState(() => {

@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import FloatingToolbar from './FloatingToolbar';
+import KeyboardShortcuts from './KeyboardShortcuts';
 
 const LEGAL = {
   terms: {
@@ -89,10 +90,24 @@ Academic outcomes are not guaranteed. Use this tool at your own risk and always 
 export default function Layout() {
   const location = useLocation();
   const [footerModal, setFooterModal] = useState(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      const tag = e.target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        setShortcutsOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
   return (
     <div className="min-h-screen bg-bg-primary">
@@ -114,6 +129,7 @@ export default function Layout() {
       </main>
       <MobileNav />
       <FloatingToolbar />
+      <KeyboardShortcuts open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
 
       {footerModal && LEGAL[footerModal] && createPortal(
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50" onClick={() => setFooterModal(null)}>
