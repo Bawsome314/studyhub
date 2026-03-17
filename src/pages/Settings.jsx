@@ -144,17 +144,16 @@ export default function Settings() {
       <button
         key={t.id}
         onClick={() => setTheme(t.id)}
-        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-all ${
+        className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md border transition-all ${
           isActive
             ? 'border-accent bg-accent-muted ring-1 ring-accent/30'
             : 'border-border hover:border-accent/30'
         }`}
       >
-        {/* Preview swatch: bg + accent stripe */}
-        <div className="w-6 h-6 rounded shrink-0 overflow-hidden ring-1 ring-black/10" style={{ backgroundColor: t.bg }}>
-          <div className="w-full h-1.5 mt-auto" style={{ backgroundColor: t.accent, marginTop: '18px' }} />
+        <div className="w-4 h-4 rounded-sm shrink-0 overflow-hidden ring-1 ring-black/10" style={{ backgroundColor: t.bg }}>
+          <div className="w-full h-1" style={{ backgroundColor: t.accent, marginTop: '12px' }} />
         </div>
-        <span className="text-[11px] font-medium text-text-primary leading-tight">{t.name}</span>
+        <span className="text-[10px] font-medium text-text-primary leading-tight truncate">{t.name}</span>
       </button>
     );
   }
@@ -172,13 +171,13 @@ export default function Settings() {
         <div className="bg-bg-secondary rounded-xl border border-border p-5 space-y-4">
           <div>
             <p className="text-[10px] text-text-muted mb-2 uppercase tracking-wider">Light</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               {themes.filter(t => t.row === 'light').map(t => <ThemeButton key={t.id} t={t} />)}
             </div>
           </div>
           <div>
             <p className="text-[10px] text-text-muted mb-2 uppercase tracking-wider">Dark</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               {themes.filter(t => t.row === 'dark').map(t => <ThemeButton key={t.id} t={t} />)}
             </div>
           </div>
