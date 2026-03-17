@@ -248,7 +248,7 @@ export default function Settings() {
             <div className="flex items-center gap-3 flex-wrap">
               <button
                 onClick={() => {
-                  if (!customConfig.accent) setCustomConfig({ accent: '#6366f1', base: 'dark' });
+                  if (!customConfig.accent) setCustomConfig({ accent: '#6366f1', baseColor: '#101012' });
                   setTheme('custom');
                 }}
                 className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-all ${
@@ -258,43 +258,41 @@ export default function Settings() {
                 }`}
               >
                 <div className="w-6 h-6 rounded shrink-0 overflow-hidden ring-1 ring-black/10" style={{
-                  background: `conic-gradient(from 0deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #8b5cf6, #ef4444)`
-                }} />
+                  backgroundColor: customConfig.baseColor || '#101012',
+                }}>
+                  <div className="w-full h-1.5" style={{ backgroundColor: customConfig.accent || '#6366f1', marginTop: '18px' }} />
+                </div>
                 <span className="text-[11px] font-medium text-text-primary leading-tight">Custom</span>
               </button>
 
-              {theme === 'custom' && (
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <label className="text-[10px] text-text-muted">Accent</label>
-                    <input
-                      type="color"
-                      value={customConfig.accent || '#6366f1'}
-                      onChange={e => setCustomConfig({ ...customConfig, accent: e.target.value })}
-                      className="w-8 h-8 rounded-lg border border-border cursor-pointer bg-transparent"
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <label className="text-[10px] text-text-muted">Base</label>
-                    <button
-                      onClick={() => setCustomConfig({ ...customConfig, base: 'light' })}
-                      className={`px-2.5 py-1 text-[10px] font-medium rounded-md transition-all ${
-                        (customConfig.base || 'dark') === 'light'
-                          ? 'bg-accent text-white'
-                          : 'bg-bg-tertiary text-text-muted hover:text-text-primary'
-                      }`}
-                    >Light</button>
-                    <button
-                      onClick={() => setCustomConfig({ ...customConfig, base: 'dark' })}
-                      className={`px-2.5 py-1 text-[10px] font-medium rounded-md transition-all ${
-                        (customConfig.base || 'dark') === 'dark'
-                          ? 'bg-accent text-white'
-                          : 'bg-bg-tertiary text-text-muted hover:text-text-primary'
-                      }`}
-                    >Dark</button>
-                  </div>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] text-text-muted">Accent</label>
+                <input
+                  type="color"
+                  value={customConfig.accent || '#6366f1'}
+                  onChange={e => {
+                    const next = { ...customConfig, accent: e.target.value };
+                    if (!next.baseColor) next.baseColor = '#101012';
+                    setCustomConfig(next);
+                    setTheme('custom');
+                  }}
+                  className="w-7 h-7 rounded-md border border-border cursor-pointer bg-transparent"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] text-text-muted">Background</label>
+                <input
+                  type="color"
+                  value={customConfig.baseColor || '#101012'}
+                  onChange={e => {
+                    const next = { ...customConfig, baseColor: e.target.value };
+                    if (!next.accent) next.accent = '#6366f1';
+                    setCustomConfig(next);
+                    setTheme('custom');
+                  }}
+                  className="w-7 h-7 rounded-md border border-border cursor-pointer bg-transparent"
+                />
+              </div>
             </div>
           </div>
         </div>
