@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, Keyboard } from 'lucide-react';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import FloatingToolbar from './FloatingToolbar';
@@ -100,7 +100,7 @@ export default function Layout() {
     const handleKey = (e) => {
       const tag = e.target.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
-      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if ((e.key === '?' || (e.key === '/' && e.shiftKey)) && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         setShortcutsOpen((prev) => !prev);
       }
@@ -123,6 +123,7 @@ export default function Layout() {
               <button onClick={() => setFooterModal('terms')} className="hover:text-text-secondary transition-colors">Terms of Service</button>
               <button onClick={() => setFooterModal('privacy')} className="hover:text-text-secondary transition-colors">Privacy Policy</button>
               <button onClick={() => setFooterModal('disclaimer')} className="hover:text-text-secondary transition-colors">Disclaimer</button>
+              <button onClick={() => setShortcutsOpen(true)} className="hover:text-text-secondary transition-colors hidden lg:inline-flex items-center gap-1"><Keyboard className="w-3 h-3" /> Shortcuts</button>
             </div>
           </div>
         </footer>
