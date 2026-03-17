@@ -22,8 +22,12 @@ import { timeAgo, getBestPracticeOa, getCourseReadiness } from '../utils/studyHe
 function StatCard({ icon: Icon, label, value, color, fading }) {
   return (
     <div
-      className="bg-bg-secondary rounded-xl border border-border p-4 flex items-center gap-4 transition-all duration-500 card-shadow card-hover"
-      style={{ opacity: fading ? 0 : 1 }}
+      className="bg-bg-secondary rounded-xl border border-border p-4 flex items-center gap-4 card-shadow card-hover"
+      style={{
+        opacity: fading ? 0 : 1,
+        transform: fading ? 'translateY(4px) scale(0.98)' : 'translateY(0) scale(1)',
+        transition: 'opacity 300ms ease, transform 300ms ease',
+      }}
     >
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color} shadow-sm`}>
         <Icon className="w-5 h-5 text-white" />
@@ -200,8 +204,11 @@ export default function Dashboard() {
       setFading(true);
       setTimeout(() => {
         setPairIndex(prev => (prev + 1) % CYCLING_PAIRS.length);
-        setFading(false);
-      }, 400);
+        // Let React render the new content at opacity 0, then fade in
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => setFading(false));
+        });
+      }, 350);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
@@ -299,7 +306,7 @@ export default function Dashboard() {
           {CYCLING_PAIRS.map((_, i) => (
             <button
               key={i}
-              onClick={() => { setFading(true); setTimeout(() => { setPairIndex(i); setFading(false); }, 400); }}
+              onClick={() => { setFading(true); setTimeout(() => { setPairIndex(i); requestAnimationFrame(() => requestAnimationFrame(() => setFading(false))); }, 350); }}
               className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i === pairIndex ? 'bg-accent w-3' : 'bg-text-muted/30'}`}
               aria-label={`Show stat pair ${i + 1}`}
             />
