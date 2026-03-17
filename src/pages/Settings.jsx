@@ -200,17 +200,23 @@ export default function Settings() {
     }
   }
 
-  function ThemeDot({ t }) {
+  function ThemeButton({ t }) {
     const isActive = theme === t.id;
     return (
       <button
+        key={t.id}
         onClick={() => setTheme(t.id)}
-        title={t.name}
-        className={`w-7 h-7 rounded-full shrink-0 transition-all duration-200 ${
-          isActive ? 'ring-2 ring-accent ring-offset-2 ring-offset-bg-secondary scale-110' : 'hover:scale-110'
+        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-all ${
+          isActive
+            ? 'border-accent bg-accent-muted ring-1 ring-accent/30'
+            : 'border-border hover:border-accent/30'
         }`}
-        style={{ background: `linear-gradient(135deg, ${t.bg} 60%, ${t.accent} 100%)` }}
-      />
+      >
+        <div className="w-6 h-6 rounded shrink-0 overflow-hidden ring-1 ring-black/10" style={{ backgroundColor: t.bg }}>
+          <div className="w-full h-1.5 mt-auto" style={{ backgroundColor: t.accent, marginTop: '18px' }} />
+        </div>
+        <span className="text-[11px] font-medium text-text-primary leading-tight">{t.name}</span>
+      </button>
     );
   }
 
@@ -218,67 +224,77 @@ export default function Settings() {
     <div className="space-y-8">
       <h1 className="text-2xl font-bold text-text-primary">Settings</h1>
 
-      {/* ═══ Section 1 — Theme ═══ */}
+      {/* ═══ Section 1 — Theme (full width) ═══ */}
       <section>
         <div className="flex items-center gap-2 mb-3">
           <Palette className="w-4 h-4 text-accent" />
           <h2 className="text-sm font-semibold text-text-primary">Theme</h2>
         </div>
-        <div className="bg-bg-secondary rounded-xl border border-border px-5 py-4 flex gap-6 items-start">
-          {/* Presets */}
-          <div className="flex-1 space-y-2.5">
-            <div className="flex items-center gap-2.5">
-              <span className="text-[10px] text-text-muted uppercase tracking-wider w-8 shrink-0">Light</span>
-              {themes.filter(t => t.row === 'light').map(t => <ThemeDot key={t.id} t={t} />)}
-            </div>
-            <div className="flex items-center gap-2.5">
-              <span className="text-[10px] text-text-muted uppercase tracking-wider w-8 shrink-0">Dark</span>
-              {themes.filter(t => t.row === 'dark').map(t => <ThemeDot key={t.id} t={t} />)}
+        <div className="bg-bg-secondary rounded-xl border border-border p-5 space-y-4">
+          <div>
+            <p className="text-[10px] text-text-muted mb-2 uppercase tracking-wider">Light</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
+              {themes.filter(t => t.row === 'light').map(t => <ThemeButton key={t.id} t={t} />)}
             </div>
           </div>
-
-          {/* Divider */}
-          <div className="w-px self-stretch bg-border" />
-
-          {/* Custom */}
-          <div className="flex flex-col items-center gap-2 shrink-0">
-            <span className="text-[10px] text-text-muted uppercase tracking-wider">Custom</span>
-            <button
-              onClick={() => {
-                if (!customConfig.accent) setCustomConfig({ accent: '#6366f1', baseColor: '#101012' });
-                setTheme('custom');
-              }}
-              title="Custom theme"
-              className={`w-7 h-7 rounded-full shrink-0 transition-all duration-200 ${
-                theme === 'custom' ? 'ring-2 ring-accent ring-offset-2 ring-offset-bg-secondary scale-110' : 'hover:scale-110'
-              }`}
-              style={{ background: `conic-gradient(from 0deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #8b5cf6, #ef4444)` }}
-            />
-            <div className="flex items-center gap-1.5">
-              <input
-                type="color"
-                value={customConfig.accent || '#6366f1'}
-                title="Accent color"
-                onChange={e => {
-                  const next = { ...customConfig, accent: e.target.value };
-                  if (!next.baseColor) next.baseColor = '#101012';
-                  setCustomConfig(next);
+          <div>
+            <p className="text-[10px] text-text-muted mb-2 uppercase tracking-wider">Dark</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
+              {themes.filter(t => t.row === 'dark').map(t => <ThemeButton key={t.id} t={t} />)}
+            </div>
+          </div>
+          <div>
+            <p className="text-[10px] text-text-muted mb-2 uppercase tracking-wider">Custom</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                onClick={() => {
+                  if (!customConfig.accent) setCustomConfig({ accent: '#6366f1', base: 'dark' });
                   setTheme('custom');
                 }}
-                className="w-6 h-6 rounded-full border border-border cursor-pointer bg-transparent"
-              />
-              <input
-                type="color"
-                value={customConfig.baseColor || '#101012'}
-                title="Background color"
-                onChange={e => {
-                  const next = { ...customConfig, baseColor: e.target.value };
-                  if (!next.accent) next.accent = '#6366f1';
-                  setCustomConfig(next);
-                  setTheme('custom');
-                }}
-                className="w-6 h-6 rounded-full border border-border cursor-pointer bg-transparent"
-              />
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-all ${
+                  theme === 'custom'
+                    ? 'border-accent bg-accent-muted ring-1 ring-accent/30'
+                    : 'border-border hover:border-accent/30'
+                }`}
+              >
+                <div className="w-6 h-6 rounded shrink-0 overflow-hidden ring-1 ring-black/10" style={{
+                  background: `conic-gradient(from 0deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #8b5cf6, #ef4444)`
+                }} />
+                <span className="text-[11px] font-medium text-text-primary leading-tight">Custom</span>
+              </button>
+
+              {theme === 'custom' && (
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <label className="text-[10px] text-text-muted">Accent</label>
+                    <input
+                      type="color"
+                      value={customConfig.accent || '#6366f1'}
+                      onChange={e => setCustomConfig({ ...customConfig, accent: e.target.value })}
+                      className="w-8 h-8 rounded-lg border border-border cursor-pointer bg-transparent"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-[10px] text-text-muted">Base</label>
+                    <button
+                      onClick={() => setCustomConfig({ ...customConfig, base: 'light' })}
+                      className={`px-2.5 py-1 text-[10px] font-medium rounded-md transition-all ${
+                        (customConfig.base || 'dark') === 'light'
+                          ? 'bg-accent text-white'
+                          : 'bg-bg-tertiary text-text-muted hover:text-text-primary'
+                      }`}
+                    >Light</button>
+                    <button
+                      onClick={() => setCustomConfig({ ...customConfig, base: 'dark' })}
+                      className={`px-2.5 py-1 text-[10px] font-medium rounded-md transition-all ${
+                        (customConfig.base || 'dark') === 'dark'
+                          ? 'bg-accent text-white'
+                          : 'bg-bg-tertiary text-text-muted hover:text-text-primary'
+                      }`}
+                    >Dark</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

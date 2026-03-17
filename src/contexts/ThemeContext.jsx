@@ -15,6 +15,8 @@ const THEMES = [
   { id: 'cyber', name: 'Cyber', preview: '#00ff41', bg: '#0a0a0a', accent: '#00ff41', row: 'dark' },
 ];
 
+export { THEMES };
+
 // Parse hex to {r,g,b}
 function hexToRgb(hex) {
   const h = hex.replace('#', '');
@@ -35,52 +37,45 @@ function mix(hex, target, amount) {
   return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
 }
 
-// Perceived brightness (0-255)
-function luminance(hex) {
-  const { r, g, b } = hexToRgb(hex);
-  return r * 0.299 + g * 0.587 + b * 0.114;
-}
+// Generate full CSS variables from accent color + base mode
+function generateCustomVars(accent, base) {
+  const { r, g, b } = hexToRgb(accent);
 
-// Generate full CSS variables from accent color + base color
-function generateCustomVars(accent, baseColor) {
-  const { r: ar, g: ag, b: ab } = hexToRgb(accent);
-  const isDark = luminance(baseColor) < 128;
-
-  if (isDark) {
+  if (base === 'dark') {
     return {
-      '--color-bg-primary': baseColor,
-      '--color-bg-secondary': mix(baseColor, '#ffffff', 0.06),
-      '--color-bg-tertiary': mix(baseColor, '#ffffff', 0.12),
-      '--color-bg-hover': mix(baseColor, '#ffffff', 0.18),
-      '--color-border': mix(baseColor, '#ffffff', 0.22),
+      '--color-bg-primary': '#101012',
+      '--color-bg-secondary': '#1a1a1e',
+      '--color-bg-tertiary': '#252529',
+      '--color-bg-hover': '#32323a',
+      '--color-border': '#3e3e48',
       '--color-text-primary': '#f4f4f5',
       '--color-text-secondary': '#a8a8b0',
       '--color-text-muted': '#707078',
       '--color-accent': accent,
       '--color-accent-hover': mix(accent, '#ffffff', 0.2),
-      '--color-accent-muted': `rgba(${ar}, ${ag}, ${ab}, 0.15)`,
+      '--color-accent-muted': `rgba(${r}, ${g}, ${b}, 0.15)`,
       '--color-success': '#22c55e',
       '--color-warning': '#f59e0b',
       '--color-danger': '#ef4444',
-      '--color-sidebar': mix(baseColor, '#000000', 0.3),
+      '--color-sidebar': '#0a0a0c',
     };
   } else {
     return {
-      '--color-bg-primary': baseColor,
-      '--color-bg-secondary': mix(baseColor, '#ffffff', 0.5),
-      '--color-bg-tertiary': mix(baseColor, '#000000', 0.06),
-      '--color-bg-hover': mix(baseColor, '#000000', 0.1),
-      '--color-border': mix(baseColor, '#000000', 0.18),
+      '--color-bg-primary': '#f8f9fb',
+      '--color-bg-secondary': '#ffffff',
+      '--color-bg-tertiary': '#eef0f4',
+      '--color-bg-hover': '#e3e6ed',
+      '--color-border': '#c8ced8',
       '--color-text-primary': '#111827',
       '--color-text-secondary': '#374151',
       '--color-text-muted': '#6b7280',
       '--color-accent': accent,
       '--color-accent-hover': mix(accent, '#000000', 0.15),
-      '--color-accent-muted': `rgba(${ar}, ${ag}, ${ab}, 0.08)`,
+      '--color-accent-muted': `rgba(${r}, ${g}, ${b}, 0.08)`,
       '--color-success': '#059669',
       '--color-warning': '#d97706',
       '--color-danger': '#dc2626',
-      '--color-sidebar': mix(baseColor, '#ffffff', 0.3),
+      '--color-sidebar': '#ffffff',
     };
   }
 }
@@ -131,7 +126,7 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     if (theme === 'custom' && customConfig.accent) {
       document.documentElement.setAttribute('data-theme', 'custom');
-      applyCustomVars(generateCustomVars(customConfig.accent, customConfig.baseColor || '#101012'));
+      applyCustomVars(generateCustomVars(customConfig.accent, customConfig.base || 'dark'));
     } else {
       clearCustomVars();
       document.documentElement.setAttribute('data-theme', theme);
