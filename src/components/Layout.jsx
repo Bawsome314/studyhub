@@ -100,7 +100,7 @@ export default function Layout() {
     const handleKey = (e) => {
       const tag = e.target.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
-      if ((e.key === '?' || (e.key === '/' && e.shiftKey)) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if ((e.key === '?' || e.key === '/') && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         setShortcutsOpen((prev) => !prev);
       }

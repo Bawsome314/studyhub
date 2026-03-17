@@ -6,7 +6,7 @@ const SECTIONS = [
   {
     title: 'Global',
     shortcuts: [
-      { key: '?', desc: 'Show keyboard shortcuts' },
+      { key: '/', desc: 'Show keyboard shortcuts' },
     ],
   },
   {
@@ -53,7 +53,7 @@ export default function KeyboardShortcuts({ open, onClose }) {
   useEffect(() => {
     if (!open) return;
     const handleKey = (e) => {
-      if (e.key === 'Escape' || e.key === '?') {
+      if (e.key === 'Escape' || e.key === '?' || e.key === '/') {
         e.preventDefault();
         onClose();
       }
