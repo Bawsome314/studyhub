@@ -48,3 +48,48 @@ create trigger user_data_updated_at
   before update on user_data
   for each row
   execute function update_updated_at();
+
+-- ═══ Community Study Guides ═══
+
+create table if not exists community_guides (
+  id uuid default gen_random_uuid() primary key,
+  course_code text not null unique,
+  course_name text not null default '',
+  uploader_id uuid references auth.users(id) on delete set null,
+  uploader_name text not null default 'Anonymous',
+  card_count integer not null default 0,
+  question_count integer not null default 0,
+  unit_count integer not null default 0,
+  guide_json jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_community_guides_course_code on community_guides(course_code);
+
+alter table community_guides enable row level security;
+
+-- Anyone can read community guides (even anonymous/anon key)
+create policy "Anyone can read community guides"
+  on community_guides for select
+  using (true);
+
+-- Authenticated users can share (insert) guides
+create policy "Authenticated users can share guides"
+  on community_guides for insert
+  with check (auth.uid() = uploader_id);
+
+-- Only the uploader can update their own guide
+create policy "Uploader can update own guide"
+  on community_guides for update
+  using (auth.uid() = uploader_id);
+
+-- Only the uploader can delete their own guide
+create policy "Uploader can delete own guide"
+  on community_guides for delete
+  using (auth.uid() = uploader_id);
+
+create trigger community_guides_updated_at
+  before update on community_guides
+  for each row
+  execute function update_updated_at();

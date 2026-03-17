@@ -1,6 +1,6 @@
 import { useTheme } from '../contexts/ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Palette, User, Download, Upload, FileJson, BookOpen, Cloud, Copy, Check, HardDrive, GraduationCap, Plus, Pencil, Trash2, X, ChevronDown, Search } from 'lucide-react';
+import { Palette, User, Download, Upload, FileJson, BookOpen, Cloud, Copy, Check, HardDrive, GraduationCap, Plus, Pencil, Trash2, X, ChevronDown, Search, Users, Loader2 } from 'lucide-react';
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -9,6 +9,9 @@ import AuthSection from '../components/AuthSection';
 import { putGuide, deleteGuide as deleteGuideIDB, getStorageEstimate } from '../lib/indexedDB';
 import { updateGuideIndex, removeFromGuideIndex, readGuideIndex } from '../lib/guideIndex';
 import buildClaudePrompt from '../lib/buildClaudePrompt';
+import { isSupabaseConfigured } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { shareCommunityGuide, fetchAllCommunityGuides, fetchCommunityGuide } from '../lib/communityGuides';
 
 export default function Settings() {
   const { theme, setTheme, themes } = useTheme();
@@ -30,6 +33,24 @@ export default function Settings() {
   const [courseFormOpen, setCourseFormOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
   const [courseForm, setCourseForm] = useState({ code: '', name: '', cus: 3, type: 'OA', category: 'Business Core' });
+  const [shareOnImport, setShareOnImport] = useState(false);
+  const { user } = useAuth();
+  const canShare = isSupabaseConfigured() && !!user;
+
+  // Community guides browse
+  const [communityGuides, setCommunityGuides] = useState([]);
+  const [communityLoading, setCommunityLoading] = useState(false);
+  const [communityLoaded, setCommunityLoaded] = useState(false);
+
+  function loadCommunityList() {
+    if (communityLoaded || !isSupabaseConfigured()) return;
+    setCommunityLoading(true);
+    fetchAllCommunityGuides().then(data => {
+      setCommunityGuides(data);
+      setCommunityLoading(false);
+      setCommunityLoaded(true);
+    }).catch(() => setCommunityLoading(false));
+  }
 
   function handleExport() {
     try {
@@ -88,7 +109,14 @@ export default function Settings() {
         }
         await putGuide(guide);
         updateGuideIndex(guide);
-        setImportStatus(`Study guide for ${guide.courseId} imported successfully!`);
+        if (shareOnImport && canShare) {
+          const { error: shareErr } = await shareCommunityGuide(guide, user.id, profile.name || 'Anonymous');
+          setImportStatus(shareErr
+            ? `Guide imported but sharing failed: ${shareErr}`
+            : `Study guide for ${guide.courseId} imported and shared with community!`);
+        } else {
+          setImportStatus(`Study guide for ${guide.courseId} imported successfully!`);
+        }
       } catch {
         setImportStatus('Invalid JSON file.');
       }
@@ -373,6 +401,21 @@ export default function Settings() {
             </label>
           </div>
 
+          {/* Share toggle */}
+          {isSupabaseConfigured() && (
+            <label className={`flex items-center gap-2 text-xs ${canShare ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}>
+              <input
+                type="checkbox"
+                checked={shareOnImport}
+                onChange={e => canShare && setShareOnImport(e.target.checked)}
+                disabled={!canShare}
+                className="rounded border-border accent-accent"
+              />
+              <span className="text-text-secondary">Share with community</span>
+              {!canShare && <span className="text-text-muted">(sign in to share)</span>}
+            </label>
+          )}
+
           {/* Paste JSON */}
           <div>
             <p className="text-[11px] text-text-muted mb-1">Or paste JSON directly:</p>
@@ -389,7 +432,14 @@ export default function Settings() {
                   if (!guide.courseId || !guide.units) { setImportStatus('Invalid format.'); setImporting(false); return; }
                   await putGuide(guide);
                   updateGuideIndex(guide);
-                  setImportStatus(`Study guide for ${guide.courseId} imported!`);
+                  if (shareOnImport && canShare) {
+                    const { error: shareErr } = await shareCommunityGuide(guide, user.id, profile.name || 'Anonymous');
+                    setImportStatus(shareErr
+                      ? `Guide imported but sharing failed: ${shareErr}`
+                      : `Study guide for ${guide.courseId} imported and shared!`);
+                  } else {
+                    setImportStatus(`Study guide for ${guide.courseId} imported!`);
+                  }
                   setJsonPaste('');
                 } catch { setImportStatus('Invalid JSON.'); }
                 setImporting(false);
@@ -412,7 +462,82 @@ export default function Settings() {
         </div>
       </section>
 
-      {/* ═══ Section 5 — Data Management (full width) ═══ */}
+      {/* ═══ Section 5 — Community Guides ═══ */}
+      {isSupabaseConfigured() && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Users className="w-4 h-4 text-accent" />
+            <h2 className="text-sm font-semibold text-text-primary">Community Guides</h2>
+          </div>
+          <div className="bg-bg-secondary rounded-xl border border-border overflow-hidden">
+            <button
+              onClick={loadCommunityList}
+              className="w-full flex items-center justify-between px-5 py-4 hover:bg-bg-hover transition-colors"
+            >
+              <span className="text-xs text-text-secondary">
+                {communityLoaded
+                  ? <><span className="font-num font-semibold text-text-primary">{communityGuides.length}</span> guides shared by the community</>
+                  : 'Browse study guides shared by other students'
+                }
+              </span>
+              <ChevronDown className={`w-4 h-4 text-text-muted transition-transform duration-200 ${communityLoaded ? 'rotate-180' : ''}`} />
+            </button>
+
+            {communityLoading && (
+              <div className="px-5 pb-4 flex items-center gap-2 text-xs text-text-muted">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading community guides...
+              </div>
+            )}
+
+            {communityLoaded && (
+              <div className="px-5 pb-5 border-t border-border pt-4 accordion-enter">
+                {communityGuides.length === 0 ? (
+                  <p className="text-xs text-text-muted text-center py-4">No community guides shared yet. Be the first!</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {communityGuides.map(g => (
+                      <div key={g.course_code} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-bg-hover">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono text-accent font-semibold">{g.course_code}</span>
+                            <span className="text-xs text-text-primary truncate">{g.course_name}</span>
+                          </div>
+                          <p className="text-[10px] text-text-muted">
+                            {g.card_count} cards · {g.unit_count} units · by {g.uploader_name}
+                          </p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            setImporting(true);
+                            setImportStatus('');
+                            try {
+                              const full = await fetchCommunityGuide(g.course_code);
+                              if (full?.guide_json) {
+                                await putGuide(full.guide_json);
+                                updateGuideIndex(full.guide_json);
+                                setImportStatus(`Loaded ${g.course_code} from community!`);
+                              }
+                            } catch {
+                              setImportStatus('Failed to load community guide.');
+                            }
+                            setImporting(false);
+                          }}
+                          disabled={importing}
+                          className="px-3 py-1.5 bg-accent hover:bg-accent-hover disabled:opacity-40 text-white text-[10px] font-medium rounded-lg transition-colors shrink-0"
+                        >
+                          Load
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ═══ Section 6 — Data Management (full width) ═══ */}
       <section>
         <div className="flex items-center gap-2 mb-3">
           <FileJson className="w-4 h-4 text-text-muted" />

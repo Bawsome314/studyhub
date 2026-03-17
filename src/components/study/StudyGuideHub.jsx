@@ -17,11 +17,14 @@ import {
   AlertTriangle,
   Copy,
   Check,
+  Users,
+  Loader2,
 } from 'lucide-react';
 import { useStudyGuide, useCardProgress, useQuizHistory, useMissedQuestions, pickRandom, shuffleChoices, getDueCards } from '../../hooks/useStudyGuide';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { formatShortDate, getCourseReadiness, readinessColor, readinessTextColor } from '../../utils/studyHelpers';
 import buildClaudePrompt from '../../lib/buildClaudePrompt';
+import { useCommunityGuide } from '../../hooks/useCommunityGuide';
 import QuizEngine from './QuizEngine';
 import Flashcards from './Flashcards';
 import RapidFire from './RapidFire';
@@ -44,6 +47,7 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
   const [activeTool, setActiveTool] = useState(null);
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [summaryCopied, setSummaryCopied] = useState(false);
+  const { communityGuide, installing: communityInstalling, loadGuide: loadCommunityGuide } = useCommunityGuide(!guide && !loading ? courseCode : null);
 
   if (loading) {
     return (
@@ -57,32 +61,64 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
 
   if (!guide) {
     return (
-      <div className="bg-bg-secondary rounded-xl border border-border p-8 text-center">
-        <BookOpen className="w-10 h-10 text-text-muted mx-auto mb-3" />
-        <h3 className="text-sm font-medium text-text-primary mb-1">No study guide loaded</h3>
-        <p className="text-xs text-text-muted max-w-sm mx-auto mb-4">
-          Generate a study guide with Claude or import one from Settings.
-        </p>
-        <div className="flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              const prompt = buildClaudePrompt({ code: courseCode, name: courseName, id: courseId });
-              navigator.clipboard.writeText(prompt);
-              setSummaryCopied(true);
-              setTimeout(() => setSummaryCopied(false), 2000);
-            }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-hover text-white text-xs font-medium rounded-lg transition-colors"
-          >
-            {summaryCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            {summaryCopied ? 'Copied!' : 'Generate Study Guide'}
-          </button>
-          <Link
-            to="/settings"
-            className="inline-flex items-center gap-1.5 px-4 py-2 border border-border text-text-secondary hover:text-text-primary text-xs font-medium rounded-lg transition-colors"
-          >
-            Import in Settings
-          </Link>
+      <div className="space-y-3">
+        <div className="bg-bg-secondary rounded-xl border border-border p-8 text-center">
+          <BookOpen className="w-10 h-10 text-text-muted mx-auto mb-3" />
+          <h3 className="text-sm font-medium text-text-primary mb-1">No study guide loaded</h3>
+          <p className="text-xs text-text-muted max-w-sm mx-auto mb-4">
+            Generate a study guide with Claude or import one from Settings.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <button
+              onClick={() => {
+                const prompt = buildClaudePrompt({ code: courseCode, name: courseName, id: courseId });
+                navigator.clipboard.writeText(prompt);
+                setSummaryCopied(true);
+                setTimeout(() => setSummaryCopied(false), 2000);
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-hover text-white text-xs font-medium rounded-lg transition-colors"
+            >
+              {summaryCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {summaryCopied ? 'Copied!' : 'Generate Study Guide'}
+            </button>
+            <Link
+              to="/settings"
+              className="inline-flex items-center gap-1.5 px-4 py-2 border border-border text-text-secondary hover:text-text-primary text-xs font-medium rounded-lg transition-colors"
+            >
+              Import in Settings
+            </Link>
+          </div>
         </div>
+
+        {/* Community guide available */}
+        {communityGuide && (
+          <div className="bg-bg-secondary rounded-xl border border-accent/20 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center shrink-0">
+                  <Users className="w-4 h-4 text-accent" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-text-primary">Community guide available</p>
+                  <p className="text-[11px] text-text-muted">
+                    {communityGuide.card_count} cards · {communityGuide.unit_count} units · Shared by {communityGuide.uploader_name}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  const loaded = await loadCommunityGuide();
+                  if (loaded) window.location.reload();
+                }}
+                disabled={communityInstalling}
+                className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors shrink-0"
+              >
+                {communityInstalling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />}
+                {communityInstalling ? 'Loading...' : 'Load Guide'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
