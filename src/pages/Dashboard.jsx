@@ -22,7 +22,7 @@ import { timeAgo, getBestPracticeOa, getCourseReadiness } from '../utils/studyHe
 function StatCard({ icon: Icon, label, value, color, fading }) {
   return (
     <div
-      className="bg-bg-secondary rounded-xl border border-border p-4 flex items-center gap-4 card-shadow card-hover"
+      className="bg-bg-secondary rounded-xl border border-border p-4 flex items-center gap-4 card-shadow"
       style={{
         opacity: fading ? 0 : 1,
         transform: fading ? 'translateY(4px) scale(0.98)' : 'translateY(0) scale(1)',
