@@ -39,6 +39,22 @@ export default function Settings() {
   const { user } = useAuth();
   const canShare = isSupabaseConfigured() && !!user;
 
+  // Study guides loaded from lightweight index (needed early for community check + course icons)
+  const loadedGuides = useMemo(() => {
+    try {
+      const index = readGuideIndex();
+      return Object.entries(index).map(([courseId, meta]) => ({
+        courseId,
+        code: meta.courseCode || courseId,
+        name: meta.courseName || courseId,
+        units: meta.unitCount || 0,
+        cards: meta.totalCards || 0,
+      }));
+    } catch { return []; }
+  }, [importStatus]);
+
+  const guideLoadedSet = useMemo(() => new Set(loadedGuides.map(g => g.courseId)), [loadedGuides]);
+
   // Community guides: auto-find available guides for user's courses
   const [communityAvailable, setCommunityAvailable] = useState([]);
   const [communityChecked, setCommunityChecked] = useState(false);
@@ -162,22 +178,6 @@ export default function Settings() {
   useEffect(() => {
     getStorageEstimate().then(est => setStorageEstimate(est));
   }, [importStatus]);
-
-  // Study guides loaded from lightweight index
-  const loadedGuides = useMemo(() => {
-    try {
-      const index = readGuideIndex();
-      return Object.entries(index).map(([courseId, meta]) => ({
-        courseId,
-        code: meta.courseCode || courseId,
-        name: meta.courseName || courseId,
-        units: meta.unitCount || 0,
-        cards: meta.totalCards || 0,
-      }));
-    } catch { return []; }
-  }, [importStatus]);
-
-  const guideLoadedSet = useMemo(() => new Set(loadedGuides.map(g => g.courseId)), [loadedGuides]);
 
   async function deleteStudyGuide(courseId) {
     try {
