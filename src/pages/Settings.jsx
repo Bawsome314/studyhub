@@ -1,4 +1,4 @@
-import { useTheme } from '../contexts/ThemeContext';
+import { useTheme, SECRET_THEMES } from '../contexts/ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Palette, User, Download, Upload, FileJson, BookOpen, Cloud, Copy, Check, HardDrive, GraduationCap, Plus, Pencil, Trash2, X, ChevronDown, Search, Users, Loader2, Share2 } from 'lucide-react';
 import { getGuide } from '../lib/indexedDB';
@@ -17,6 +17,8 @@ import { shareCommunityGuide, fetchAllCommunityGuides, fetchCommunityGuide, dele
 
 export default function Settings() {
   const { theme, setTheme, themes, customConfig, setCustomConfig } = useTheme();
+  const [secretOpen, setSecretOpen] = useState(false);
+  const [secretClicks, setSecretClicks] = useState(0);
   const [profile, setProfile] = useLocalStorage('studyhub-profile', {
     name: '',
     program: 'BS Finance',
@@ -226,22 +228,29 @@ export default function Settings() {
 
       {/* ═══ Section 1 — Theme (full width) ═══ */}
       <section>
-        <div className="flex items-center gap-2 mb-3">
+        <div
+          className="flex items-center gap-2 mb-3 select-none"
+          onClick={() => {
+            const next = secretClicks + 1;
+            setSecretClicks(next);
+            if (next >= 5) { setSecretOpen(true); setSecretClicks(0); }
+          }}
+        >
           <Palette className="w-4 h-4 text-accent" />
-          <h2 className="text-sm font-semibold text-text-primary">Theme</h2>
+          <h2 className="text-sm font-semibold text-text-primary cursor-default">Theme</h2>
         </div>
         <div className="bg-bg-secondary rounded-xl border border-border p-5 flex gap-5">
           {/* Presets */}
           <div className="flex-1 space-y-3 min-w-0">
             <div>
               <p className="text-[10px] text-text-muted mb-1.5 uppercase tracking-wider">Light</p>
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="grid grid-cols-3 gap-1.5">
                 {themes.filter(t => t.row === 'light').map(t => <ThemeButton key={t.id} t={t} />)}
               </div>
             </div>
             <div>
               <p className="text-[10px] text-text-muted mb-1.5 uppercase tracking-wider">Dark</p>
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="grid grid-cols-3 gap-1.5">
                 {themes.filter(t => t.row === 'dark').map(t => <ThemeButton key={t.id} t={t} />)}
               </div>
             </div>
@@ -874,6 +883,27 @@ export default function Settings() {
         }}
         onCancel={() => setConfirmAction(null)}
       />
+
+      {/* Secret themes popup */}
+      {secretOpen && createPortal(
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50" onClick={() => setSecretOpen(false)}>
+          <div className="bg-bg-secondary rounded-2xl border border-border p-5 w-full max-w-xs mx-4 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-text-primary">Secret Themes</h3>
+                <p className="text-[10px] text-text-muted mt-0.5">You found them!</p>
+              </div>
+              <button onClick={() => setSecretOpen(false)} className="p-1 text-text-muted hover:text-text-primary transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {SECRET_THEMES.map(t => <ThemeButton key={t.id} t={t} />)}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
