@@ -1,6 +1,8 @@
 import { useTheme } from '../contexts/ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Palette, User, Download, Upload, FileJson, BookOpen, Cloud, Copy, Check, HardDrive, GraduationCap, Plus, Pencil, Trash2, X, ChevronDown, Search, Users, Loader2 } from 'lucide-react';
+import { Palette, User, Download, Upload, FileJson, BookOpen, Cloud, Copy, Check, HardDrive, GraduationCap, Plus, Pencil, Trash2, X, ChevronDown, Search, Users, Loader2, Share2 } from 'lucide-react';
+import { getGuide } from '../lib/indexedDB';
+import { checkCommunityGuide } from '../lib/communityGuides';
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -110,10 +112,15 @@ export default function Settings() {
         await putGuide(guide);
         updateGuideIndex(guide);
         if (shareOnImport && canShare) {
-          const { error: shareErr } = await shareCommunityGuide(guide, user.id, profile.name || 'Anonymous');
-          setImportStatus(shareErr
-            ? `Guide imported but sharing failed: ${shareErr}`
-            : `Study guide for ${guide.courseId} imported and shared with community!`);
+          const existing = await checkCommunityGuide(guide.courseCode || guide.courseId);
+          if (existing) {
+            setImportStatus(`Study guide imported! A community guide for ${guide.courseCode || guide.courseId} already exists (by ${existing.uploader_name}). Use Data Management to share/replace.`);
+          } else {
+            const { error: shareErr } = await shareCommunityGuide(guide, user.id, profile.name || 'Anonymous');
+            setImportStatus(shareErr
+              ? `Guide imported but sharing failed: ${shareErr}`
+              : `Study guide for ${guide.courseId} imported and shared with community!`);
+          }
         } else {
           setImportStatus(`Study guide for ${guide.courseId} imported successfully!`);
         }
@@ -144,6 +151,8 @@ export default function Settings() {
       }));
     } catch { return []; }
   }, [importStatus]);
+
+  const guideLoadedSet = useMemo(() => new Set(loadedGuides.map(g => g.courseId)), [loadedGuides]);
 
   async function deleteStudyGuide(courseId) {
     try {
@@ -339,6 +348,10 @@ export default function Settings() {
                       {filtered.filter(c => c.category === cat).map(c => (
                         <div key={c.id} className="group flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-bg-hover">
                           <span className="text-xs font-mono text-accent w-10 shrink-0">{c.code}</span>
+                          {guideLoadedSet.has(c.id)
+                            ? <BookOpen className="w-3 h-3 text-success shrink-0" title="Study guide loaded" />
+                            : <BookOpen className="w-3 h-3 text-text-muted/20 shrink-0" title="No study guide" />
+                          }
                           <span className="text-xs text-text-primary flex-1 truncate">{c.name}</span>
                           <span className="text-[10px] text-text-muted font-num shrink-0">{c.cus} CU</span>
                           <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
@@ -433,10 +446,15 @@ export default function Settings() {
                   await putGuide(guide);
                   updateGuideIndex(guide);
                   if (shareOnImport && canShare) {
-                    const { error: shareErr } = await shareCommunityGuide(guide, user.id, profile.name || 'Anonymous');
-                    setImportStatus(shareErr
-                      ? `Guide imported but sharing failed: ${shareErr}`
-                      : `Study guide for ${guide.courseId} imported and shared!`);
+                    const existing = await checkCommunityGuide(guide.courseCode || guide.courseId);
+                    if (existing) {
+                      setImportStatus(`Guide imported! A community guide for ${guide.courseCode || guide.courseId} already exists (by ${existing.uploader_name}). Use Data Management to share/replace.`);
+                    } else {
+                      const { error: shareErr } = await shareCommunityGuide(guide, user.id, profile.name || 'Anonymous');
+                      setImportStatus(shareErr
+                        ? `Guide imported but sharing failed: ${shareErr}`
+                        : `Study guide for ${guide.courseId} imported and shared!`);
+                    }
                   } else {
                     setImportStatus(`Study guide for ${guide.courseId} imported!`);
                   }
@@ -572,6 +590,22 @@ export default function Settings() {
                 {loadedGuides.map(g => (
                   <div key={g.courseId} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-bg-hover">
                     <span className="text-xs text-text-primary flex-1 truncate">{g.code} — {g.units} units, {g.cards} cards</span>
+                    {canShare && (
+                      <button
+                        onClick={async () => {
+                          // Check if already shared
+                          const existing = await checkCommunityGuide(g.code);
+                          if (existing) {
+                            setConfirmAction({ type: 'share-guide', courseId: g.courseId, code: g.code, existingUploader: existing.uploader_name });
+                          } else {
+                            setConfirmAction({ type: 'share-guide', courseId: g.courseId, code: g.code, existingUploader: null });
+                          }
+                        }}
+                        className="text-[10px] text-text-muted hover:text-accent transition-colors shrink-0 flex items-center gap-1"
+                      >
+                        <Share2 className="w-2.5 h-2.5" /> Share
+                      </button>
+                    )}
                     <button onClick={() => setConfirmAction({ type: 'reset-progress', id: g.courseId })} className="text-[10px] text-text-muted hover:text-warning transition-colors shrink-0">Reset Progress</button>
                     <button onClick={() => setConfirmAction({ type: 'delete-guide', id: g.courseId })} className="text-[10px] text-text-muted hover:text-danger transition-colors shrink-0">Delete</button>
                   </div>
@@ -700,6 +734,38 @@ export default function Settings() {
         confirmLabel="Clear All"
         confirmColor="bg-danger"
         onConfirm={() => { clearAll(); setConfirmAction(null); }}
+        onCancel={() => setConfirmAction(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmAction?.type === 'share-guide'}
+        title={confirmAction?.existingUploader
+          ? `Replace community guide for ${confirmAction?.code}?`
+          : `Share ${confirmAction?.code} with the community?`
+        }
+        message={confirmAction?.existingUploader
+          ? `A community guide for ${confirmAction?.code} already exists (shared by ${confirmAction?.existingUploader}). Sharing yours will replace it.`
+          : 'Other students will be able to browse and load this guide. Your study progress stays private.'
+        }
+        confirmLabel={confirmAction?.existingUploader ? 'Replace' : 'Share'}
+        confirmColor="bg-accent"
+        onConfirm={async () => {
+          const action = confirmAction;
+          setConfirmAction(null);
+          setImporting(true);
+          setImportStatus('');
+          try {
+            const guide = await getGuide(action.courseId);
+            if (!guide) { setImportStatus('Guide not found.'); setImporting(false); return; }
+            const { error: shareErr } = await shareCommunityGuide(guide, user.id, profile.name || 'Anonymous');
+            setImportStatus(shareErr
+              ? `Sharing failed: ${shareErr}`
+              : `${action.code} shared with the community!`);
+          } catch {
+            setImportStatus('Failed to share guide.');
+          }
+          setImporting(false);
+        }}
         onCancel={() => setConfirmAction(null)}
       />
     </div>
