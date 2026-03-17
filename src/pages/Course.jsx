@@ -56,14 +56,14 @@ export default function Course() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 bg-bg-secondary rounded-lg p-1 border border-border overflow-x-auto">
+      <div className="flex gap-1 bg-bg-secondary rounded-lg p-1 border border-border overflow-x-auto card-shadow">
         {tabs.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all duration-200 btn-press ${
               activeTab === id
-                ? 'bg-accent text-white'
+                ? 'bg-accent text-white shadow-sm'
                 : 'text-text-secondary hover:text-text-primary hover:bg-bg-hover'
             }`}
           >
@@ -74,7 +74,7 @@ export default function Course() {
       </div>
 
       {/* Tab content */}
-      <div className="bg-bg-secondary rounded-xl border border-border p-6 min-h-[300px]">
+      <div className="bg-bg-secondary rounded-xl border border-border p-6 min-h-[300px] card-shadow">
         {activeTab === 'study-guide' && (
           <StudyGuideHub
             courseId={course.id}

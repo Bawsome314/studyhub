@@ -128,7 +128,7 @@ export default function TermPlan() {
               <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider">{category}</h2>
               <span className="text-xs text-text-muted font-num">{catPassed}/{categoryCourses.length}</span>
             </div>
-            <div className="bg-bg-secondary rounded-xl border border-border divide-y divide-border overflow-hidden">
+            <div className="bg-bg-secondary rounded-xl border border-border divide-y divide-border overflow-hidden card-shadow">
               {categoryCourses.map(course => {
                 const status = courseProgress[course.id]?.status || 'not-started';
                 const studied = lastStudied[course.id];

@@ -117,14 +117,14 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-[260px] bg-sidebar border-r border-border flex flex-col z-40 hidden lg:flex">
+    <aside className="fixed left-0 top-0 bottom-0 w-[260px] bg-sidebar border-r border-border flex flex-col z-40 hidden lg:flex shadow-sm">
       {/* Brand */}
       <div className="px-5 py-5 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
+        <div className="w-9 h-9 rounded-xl bg-accent shadow-md shadow-accent/25 flex items-center justify-center">
           <GraduationCap className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-text-primary leading-tight">StudyHub</h1>
+          <h1 className="text-sm font-bold text-text-primary leading-tight tracking-tight">StudyHub</h1>
           <p className="text-xs text-text-muted">{profile.program || 'WGU Finance'}</p>
         </div>
       </div>
@@ -136,9 +136,9 @@ export default function Sidebar() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                 isActive
-                  ? 'bg-accent-muted text-accent font-medium'
+                  ? 'bg-accent-muted text-accent font-medium nav-active'
                   : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
               }`
             }

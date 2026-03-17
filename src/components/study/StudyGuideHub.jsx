@@ -265,7 +265,7 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
       </div>
 
       {/* ═══ TOP BANNER: Assessment ═══ */}
-      <div className="bg-bg-secondary rounded-xl border border-border p-5">
+      <div className="bg-bg-secondary rounded-xl border border-border p-5 card-shadow">
         {!hasTakenPreTest ? (
           /* Pre-test CTA */
           <div className="flex items-center justify-between gap-4">
@@ -427,7 +427,7 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
       </div>
 
       {/* ═══ BOTTOM: Practice OA ═══ */}
-      <div className="bg-bg-secondary rounded-xl border-2 border-accent/20 p-5">
+      <div className="bg-bg-secondary rounded-xl border-2 border-accent/20 p-5 card-shadow-lg">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
@@ -633,7 +633,7 @@ function BigToolCard({ icon: Icon, label, desc, meta, badge, badgeColor, color, 
       className={`w-full flex items-center gap-4 p-4 rounded-xl border text-left transition-all ${
         disabled
           ? 'opacity-30 cursor-not-allowed bg-bg-tertiary border-border'
-          : 'bg-bg-secondary border-border hover:border-accent/30 hover:bg-bg-hover cursor-pointer'
+          : 'bg-bg-secondary border-border hover:border-accent/30 hover:bg-bg-hover cursor-pointer card-shadow card-hover'
       }`}
     >
       <div className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${color}`}>
@@ -659,7 +659,7 @@ function ToolCard({ icon: Icon, label, desc, meta, color, disabled, onClick }) {
       className={`w-full flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all ${
         disabled
           ? 'opacity-30 cursor-not-allowed bg-bg-tertiary border-border'
-          : 'bg-bg-secondary border-border hover:border-accent/30 hover:bg-bg-hover cursor-pointer'
+          : 'bg-bg-secondary border-border hover:border-accent/30 hover:bg-bg-hover cursor-pointer card-shadow card-hover'
       }`}
     >
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${color}`}>

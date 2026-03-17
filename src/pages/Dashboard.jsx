@@ -22,15 +22,15 @@ import { timeAgo, getBestPracticeOa, getCourseReadiness } from '../utils/studyHe
 function StatCard({ icon: Icon, label, value, color, fading }) {
   return (
     <div
-      className="bg-bg-secondary rounded-xl border border-border p-4 flex items-center gap-4 transition-opacity duration-500"
+      className="bg-bg-secondary rounded-xl border border-border p-4 flex items-center gap-4 transition-all duration-500 card-shadow card-hover"
       style={{ opacity: fading ? 0 : 1 }}
     >
-      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color} shadow-sm`}>
         <Icon className="w-5 h-5 text-white" />
       </div>
       <div>
-        <p className="text-text-muted text-xs">{label}</p>
-        <p className="text-xl font-bold font-num text-text-primary">{value}</p>
+        <p className="text-text-muted text-[11px] tracking-wide">{label}</p>
+        <p className="text-xl font-bold font-num text-text-primary leading-tight">{value}</p>
       </div>
     </div>
   );
@@ -279,8 +279,8 @@ export default function Dashboard() {
       {/* Welcome */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">
-            {greeting}, {firstName}
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">
+            {greeting}, <span className="text-gradient">{firstName}</span>
           </h1>
           <p className="text-text-secondary text-sm mt-1">{subtitle}</p>
         </div>
@@ -311,9 +311,9 @@ export default function Dashboard() {
       {lastSession && (
         <Link
           to={`/course/${lastSession.courseId}`}
-          className="flex items-center gap-4 bg-bg-secondary rounded-xl border border-border p-4 hover:border-accent/50 transition-all card-hover"
+          className="flex items-center gap-4 bg-bg-secondary rounded-xl border border-border p-4 hover:border-accent/50 transition-all card-hover card-shadow"
         >
-          <div className="w-10 h-10 rounded-lg bg-accent/15 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0 glow-pulse">
             <Play className="w-5 h-5 text-accent" />
           </div>
           <div className="flex-1 min-w-0">
