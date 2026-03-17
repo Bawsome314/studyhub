@@ -206,16 +206,16 @@ export default function Settings() {
       <button
         key={t.id}
         onClick={() => setTheme(t.id)}
-        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-all ${
+        className={`flex items-center gap-2 px-2 py-2 rounded-lg border transition-all w-full ${
           isActive
             ? 'border-accent bg-accent-muted ring-1 ring-accent/30'
             : 'border-border hover:border-accent/30'
         }`}
       >
-        <div className="w-6 h-6 rounded shrink-0 overflow-hidden ring-1 ring-black/10" style={{ backgroundColor: t.bg }}>
-          <div className="w-full h-1.5 mt-auto" style={{ backgroundColor: t.accent, marginTop: '18px' }} />
+        <div className="w-5 h-5 rounded shrink-0 overflow-hidden ring-1 ring-black/10" style={{ backgroundColor: t.bg }}>
+          <div className="w-full h-1" style={{ backgroundColor: t.accent, marginTop: '16px' }} />
         </div>
-        <span className="text-[11px] font-medium text-text-primary leading-tight">{t.name}</span>
+        <span className="text-[10px] font-medium text-text-primary leading-tight truncate">{t.name}</span>
       </button>
     );
   }
@@ -235,13 +235,13 @@ export default function Settings() {
           <div className="flex-1 space-y-3 min-w-0">
             <div>
               <p className="text-[10px] text-text-muted mb-1.5 uppercase tracking-wider">Light</p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="grid grid-cols-5 gap-1.5">
                 {themes.filter(t => t.row === 'light').map(t => <ThemeButton key={t.id} t={t} />)}
               </div>
             </div>
             <div>
               <p className="text-[10px] text-text-muted mb-1.5 uppercase tracking-wider">Dark</p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="grid grid-cols-5 gap-1.5">
                 {themes.filter(t => t.row === 'dark').map(t => <ThemeButton key={t.id} t={t} />)}
               </div>
             </div>
