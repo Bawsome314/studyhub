@@ -93,11 +93,11 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-bg-primary">
       <Sidebar />
-      <main className="lg:ml-[260px] min-h-screen pb-20 lg:pb-0">
-        <div key={location.pathname} className="max-w-[1150px] mx-auto px-4 sm:px-6 lg:px-8 py-6 page-enter">
+      <main className="lg:ml-[260px] min-h-screen pb-20 lg:pb-0 flex flex-col">
+        <div key={location.pathname} className="max-w-[1150px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 page-enter flex-1">
           <Outlet />
         </div>
-        <footer className="max-w-[1150px] mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-4 border-t border-border mt-8">
+        <footer className="max-w-[1150px] w-full mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-4 border-t border-border mt-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] text-text-muted">
             <p>&copy; {new Date().getFullYear()} StudyHub. All rights reserved.</p>
             <div className="flex items-center gap-4">
