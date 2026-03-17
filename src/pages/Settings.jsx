@@ -16,7 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { shareCommunityGuide, fetchAllCommunityGuides, fetchCommunityGuide } from '../lib/communityGuides';
 
 export default function Settings() {
-  const { theme, setTheme, themes } = useTheme();
+  const { theme, setTheme, themes, customConfig, setCustomConfig } = useTheme();
   const [profile, setProfile] = useLocalStorage('studyhub-profile', {
     name: '',
     program: 'BS Finance',
@@ -241,6 +241,60 @@ export default function Settings() {
             <p className="text-[10px] text-text-muted mb-2 uppercase tracking-wider">Dark</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               {themes.filter(t => t.row === 'dark').map(t => <ThemeButton key={t.id} t={t} />)}
+            </div>
+          </div>
+          <div>
+            <p className="text-[10px] text-text-muted mb-2 uppercase tracking-wider">Custom</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                onClick={() => {
+                  if (!customConfig.accent) setCustomConfig({ accent: '#6366f1', base: 'dark' });
+                  setTheme('custom');
+                }}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border transition-all ${
+                  theme === 'custom'
+                    ? 'border-accent bg-accent-muted ring-1 ring-accent/30'
+                    : 'border-border hover:border-accent/30'
+                }`}
+              >
+                <div className="w-6 h-6 rounded shrink-0 overflow-hidden ring-1 ring-black/10" style={{
+                  background: `conic-gradient(from 0deg, #ef4444, #f59e0b, #22c55e, #3b82f6, #8b5cf6, #ef4444)`
+                }} />
+                <span className="text-[11px] font-medium text-text-primary leading-tight">Custom</span>
+              </button>
+
+              {theme === 'custom' && (
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <label className="text-[10px] text-text-muted">Accent</label>
+                    <input
+                      type="color"
+                      value={customConfig.accent || '#6366f1'}
+                      onChange={e => setCustomConfig({ ...customConfig, accent: e.target.value })}
+                      className="w-8 h-8 rounded-lg border border-border cursor-pointer bg-transparent"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-[10px] text-text-muted">Base</label>
+                    <button
+                      onClick={() => setCustomConfig({ ...customConfig, base: 'light' })}
+                      className={`px-2.5 py-1 text-[10px] font-medium rounded-md transition-all ${
+                        (customConfig.base || 'dark') === 'light'
+                          ? 'bg-accent text-white'
+                          : 'bg-bg-tertiary text-text-muted hover:text-text-primary'
+                      }`}
+                    >Light</button>
+                    <button
+                      onClick={() => setCustomConfig({ ...customConfig, base: 'dark' })}
+                      className={`px-2.5 py-1 text-[10px] font-medium rounded-md transition-all ${
+                        (customConfig.base || 'dark') === 'dark'
+                          ? 'bg-accent text-white'
+                          : 'bg-bg-tertiary text-text-muted hover:text-text-primary'
+                      }`}
+                    >Dark</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
