@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -14,10 +14,27 @@ import Settings from './pages/Settings';
 import Goals from './pages/Goals';
 
 export default function App() {
+  const [updateAvailable, setUpdateAvailable] = useState(null);
+
   // Fire-and-forget migration from localStorage to IndexedDB
   useEffect(() => {
     migrateGuidesToIndexedDB();
   }, []);
+
+  // Listen for service worker updates
+  useEffect(() => {
+    function onUpdate(e) {
+      setUpdateAvailable(e.detail);
+    }
+    window.addEventListener('sw-update-available', onUpdate);
+    return () => window.removeEventListener('sw-update-available', onUpdate);
+  }, []);
+
+  function applyUpdate() {
+    if (updateAvailable) {
+      updateAvailable.postMessage('skipWaiting');
+    }
+  }
 
   return (
     <ThemeProvider>
@@ -36,6 +53,16 @@ export default function App() {
               </Route>
             </Routes>
           </BrowserRouter>
+
+          {/* Update toast */}
+          {updateAvailable && (
+            <button
+              onClick={applyUpdate}
+              className="fixed bottom-20 lg:bottom-6 left-1/2 -translate-x-1/2 z-[998] flex items-center gap-2 px-4 py-2.5 bg-accent text-white text-sm font-medium rounded-xl shadow-lg shadow-accent/25 hover:bg-accent-hover transition-colors animate-[slideUp_300ms_ease-out]"
+            >
+              Update available — tap to refresh
+            </button>
+          )}
         </SyncProvider>
       </AuthProvider>
     </ThemeProvider>

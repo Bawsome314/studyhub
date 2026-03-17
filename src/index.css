@@ -267,6 +267,11 @@ body {
   to { opacity: 1; max-height: 2000px; }
 }
 
+@keyframes slideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 /* Hover lift for interactive cards */
 .card-hover {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
