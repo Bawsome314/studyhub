@@ -201,18 +201,16 @@ export default function Settings() {
         courseCode = index[courseId]?.courseCode;
       }
 
-      // 1. Delete from IndexedDB
+      // 1. Mark as deleted FIRST (prevents sync from resurrecting)
+      // deleteGuideFromSupabase calls markGuideDeleted internally,
+      // but we call it even when not logged in
+      await deleteGuideFromSupabase(user?.id, courseId);
+
+      // 2. Delete from IndexedDB
       await deleteGuideIDB(courseId);
 
-      // 2. Remove from guide index (sync, updates localStorage)
+      // 3. Remove from guide index (sync, updates localStorage)
       removeFromGuideIndex(courseId);
-
-      // 3. Delete from Supabase user_data
-      if (user) {
-        await deleteGuideFromSupabase(user.id, courseId).catch(err =>
-          console.error('Failed to delete guide from Supabase:', err)
-        );
-      }
 
       // 4. Delete from community guides if user was the uploader
       if (user && courseCode) {
@@ -224,7 +222,8 @@ export default function Settings() {
       setCommunityChecked(false); // Re-evaluate community available list
       window.dispatchEvent(new Event('studyhub-guides-updated'));
       setImportStatus(`Deleted study guide for ${courseId}.`);
-    } catch {
+    } catch (err) {
+      console.error('Delete guide error:', err);
       setImportStatus('Failed to delete study guide.');
     }
   }

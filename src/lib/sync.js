@@ -6,6 +6,28 @@ import { updateGuideIndex } from './guideIndex';
 const SYNC_PREFIX = 'studyhub-';
 const SKIP_KEYS = ['studyhub-theme'];
 const GUIDE_KEY_PREFIX = 'studyhub-guide-data:';
+const DELETED_GUIDES_KEY = 'studyhub-deleted-guides';
+
+// Track deleted guide IDs so sync doesn't resurrect them
+function getDeletedGuideIds() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(DELETED_GUIDES_KEY) || '[]'));
+  } catch {
+    return new Set();
+  }
+}
+
+function markGuideDeleted(courseId) {
+  const deleted = getDeletedGuideIds();
+  deleted.add(courseId);
+  localStorage.setItem(DELETED_GUIDES_KEY, JSON.stringify([...deleted]));
+}
+
+function unmarkGuideDeleted(courseId) {
+  const deleted = getDeletedGuideIds();
+  deleted.delete(courseId);
+  localStorage.setItem(DELETED_GUIDES_KEY, JSON.stringify([...deleted]));
+}
 
 function isGuideKey(key) {
   return key.startsWith(GUIDE_KEY_PREFIX);
@@ -36,8 +58,15 @@ export async function pullFromSupabase(userId) {
 
   if (error) throw error;
 
+  const deletedIds = getDeletedGuideIds();
   let pulled = 0;
   for (const row of data || []) {
+    // Skip guide data for guides that were explicitly deleted on this device
+    if (isGuideKey(row.key)) {
+      const courseId = row.key.replace(GUIDE_KEY_PREFIX, '');
+      if (deletedIds.has(courseId)) continue;
+    }
+
     const localTimestamp = getLocalTimestamp(row.key);
     const remoteTimestamp = new Date(row.updated_at).getTime();
 
@@ -131,6 +160,9 @@ export async function pushKeyToSupabase(userId, key) {
 export async function pushGuideToSupabase(userId, guide) {
   if (!supabase || !userId || !guide?.courseId) return;
 
+  // Clear any deletion tombstone — this guide is being (re)imported
+  unmarkGuideDeleted(guide.courseId);
+
   const key = `${GUIDE_KEY_PREFIX}${guide.courseId}`;
   const { error } = await supabase
     .from('user_data')
@@ -145,6 +177,9 @@ export async function pushGuideToSupabase(userId, guide) {
 
 // Delete a guide from Supabase (call after local deletion)
 export async function deleteGuideFromSupabase(userId, courseId) {
+  // Mark as deleted FIRST so sync can never resurrect it
+  markGuideDeleted(courseId);
+
   if (!supabase || !userId || !courseId) return;
 
   const key = `${GUIDE_KEY_PREFIX}${courseId}`;
@@ -176,13 +211,31 @@ export async function syncGuides(userId) {
   if (error) throw error;
 
   const remoteCourseIds = new Set();
+  const deletedIds = getDeletedGuideIds();
+  let guidesChanged = false;
 
-  // Write remote guides to IndexedDB if newer
+  // Delete remotely any guides that were deleted locally
   for (const row of remoteRows || []) {
     const guide = row.value;
     if (!guide?.courseId) continue;
-
+    if (deletedIds.has(guide.courseId)) {
+      // This guide was deleted locally — remove from Supabase too
+      await supabase
+        .from('user_data')
+        .delete()
+        .eq('user_id', userId)
+        .eq('key', row.key);
+      continue;
+    }
     remoteCourseIds.add(guide.courseId);
+  }
+
+  // Write remote guides to IndexedDB if newer (skip deleted)
+  for (const row of remoteRows || []) {
+    const guide = row.value;
+    if (!guide?.courseId) continue;
+    if (deletedIds.has(guide.courseId)) continue;
+
     const localTimestamp = getLocalTimestamp(row.key);
     const remoteTimestamp = new Date(row.updated_at).getTime();
 
@@ -190,11 +243,12 @@ export async function syncGuides(userId) {
       await putGuide(guide);
       updateGuideIndex(guide);
       setLocalTimestamp(row.key, remoteTimestamp);
+      guidesChanged = true;
     }
   }
 
   // Notify UI that guides may have changed
-  if (remoteRows && remoteRows.length > 0) {
+  if (guidesChanged) {
     window.dispatchEvent(new Event('studyhub-guides-updated'));
   }
 
@@ -204,6 +258,7 @@ export async function syncGuides(userId) {
 
   for (const guide of localGuides) {
     if (!guide.courseId) continue;
+    if (deletedIds.has(guide.courseId)) continue; // Don't push deleted guides
     if (!remoteCourseIds.has(guide.courseId)) {
       const key = `${GUIDE_KEY_PREFIX}${guide.courseId}`;
       pushRows.push({ user_id: userId, key, value: guide });
