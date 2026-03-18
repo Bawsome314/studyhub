@@ -12,14 +12,10 @@ const THEMES = [
 ];
 
 const SECRET_THEMES = [
-  { id: 'slate', name: 'Slate', preview: '#4a7ab5', bg: '#dce2ea', accent: '#4a7ab5', row: 'light' },
   { id: 'lavender', name: 'Lavender', preview: '#7c6aef', bg: '#f5f3ff', accent: '#7c6aef', row: 'light' },
-  { id: 'sand', name: 'Sand', preview: '#b8860b', bg: '#faf5ee', accent: '#b8860b', row: 'light' },
-  { id: 'seafoam', name: 'Seafoam', preview: '#2a9d8f', bg: '#f0faf8', accent: '#2a9d8f', row: 'light' },
   { id: 'nord', name: 'Nord', preview: '#88c0d0', bg: '#2e3440', accent: '#88c0d0', row: 'dark' },
-  { id: 'cyber', name: 'Cyber', preview: '#00ff41', bg: '#0a0a0a', accent: '#00ff41', row: 'dark' },
   { id: 'rosepine', name: 'Rosé', preview: '#c4a7e7', bg: '#191724', accent: '#c4a7e7', row: 'dark' },
-  { id: 'aurora', name: 'Aurora', preview: '#e06c9f', bg: '#0f0f1a', accent: '#e06c9f', row: 'dark' },
+  { id: 'cyber', name: 'Cyber', preview: '#00ff41', bg: '#0a0a0a', accent: '#00ff41', row: 'dark' },
 ];
 
 const ALL_THEMES = [...THEMES, ...SECRET_THEMES];

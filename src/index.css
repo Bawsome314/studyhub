@@ -26,24 +26,6 @@
   --color-sidebar: #ffffff;
 }
 
-/* -- Slate (Light): Cool blue-steel, refined and airy -- */
-[data-theme="slate"] {
-  --color-bg-primary: #dce2ea;
-  --color-bg-secondary: #e8ecf2;
-  --color-bg-tertiary: #cdd5e0;
-  --color-bg-hover: #c2cad7;
-  --color-border: #a8b4c4;
-  --color-text-primary: #1b2537;
-  --color-text-secondary: #3b4d64;
-  --color-text-muted: #6b7d94;
-  --color-accent: #4a7ab5;
-  --color-accent-hover: #3968a3;
-  --color-accent-muted: rgba(74, 122, 181, 0.12);
-  --color-success: #15825e;
-  --color-warning: #c27a1a;
-  --color-danger: #d43d3d;
-  --color-sidebar: #d4dae4;
-}
 
 /* -- Strawberries & Cream: Warm cream, rosy pink accent, feminine and soft -- */
 [data-theme="strawberry"] {
@@ -199,43 +181,6 @@
   --color-sidebar: #060606;
 }
 
-/* -- Sand (Light): Warm parchment, golden ink, desert library -- */
-[data-theme="sand"] {
-  --color-bg-primary: #faf5ee;
-  --color-bg-secondary: #fff9f2;
-  --color-bg-tertiary: #f0e8da;
-  --color-bg-hover: #e6dcc8;
-  --color-border: #d4c5a9;
-  --color-text-primary: #2c2416;
-  --color-text-secondary: #5c4a2e;
-  --color-text-muted: #8c7a5e;
-  --color-accent: #b8860b;
-  --color-accent-hover: #9a7009;
-  --color-accent-muted: rgba(184, 134, 11, 0.10);
-  --color-success: #4d7c0f;
-  --color-warning: #ca8a04;
-  --color-danger: #c53030;
-  --color-sidebar: #f5ede0;
-}
-
-/* -- Seafoam (Light): Airy coastal teal, clean and refreshing -- */
-[data-theme="seafoam"] {
-  --color-bg-primary: #f0faf8;
-  --color-bg-secondary: #f8fffe;
-  --color-bg-tertiary: #e0f2ee;
-  --color-bg-hover: #d0eae4;
-  --color-border: #b0d8ce;
-  --color-text-primary: #1a2e2a;
-  --color-text-secondary: #3a5a52;
-  --color-text-muted: #6a8a80;
-  --color-accent: #2a9d8f;
-  --color-accent-hover: #21867a;
-  --color-accent-muted: rgba(42, 157, 143, 0.10);
-  --color-success: #059669;
-  --color-warning: #d97706;
-  --color-danger: #dc2626;
-  --color-sidebar: #e8f6f2;
-}
 
 /* -- Rosé Pine (Dark): Muted rose and lavender on deep plum -- */
 [data-theme="rosepine"] {
@@ -256,24 +201,6 @@
   --color-sidebar: #15131f;
 }
 
-/* -- Aurora (Dark): Deep space with warm pink glow -- */
-[data-theme="aurora"] {
-  --color-bg-primary: #0f0f1a;
-  --color-bg-secondary: #161625;
-  --color-bg-tertiary: #1e1e30;
-  --color-bg-hover: #28283e;
-  --color-border: #353550;
-  --color-text-primary: #eee8f5;
-  --color-text-secondary: #b0a8c0;
-  --color-text-muted: #706888;
-  --color-accent: #e06c9f;
-  --color-accent-hover: #e888b2;
-  --color-accent-muted: rgba(224, 108, 159, 0.15);
-  --color-success: #56d4a0;
-  --color-warning: #f0c060;
-  --color-danger: #f06070;
-  --color-sidebar: #0a0a14;
-}
 
 /* -- Custom: Fallback base (overridden by JS-applied inline vars) -- */
 [data-theme="custom"] {
