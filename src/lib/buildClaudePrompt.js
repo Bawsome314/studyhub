@@ -7,6 +7,24 @@ const TEMPLATE_JSON = `{
     {
       "id": "unit-1",
       "name": "Unit 1: Unit Name",
+      "lessons": [
+        {
+          "id": "l1-1",
+          "title": "Section Title",
+          "content": "2-4 paragraphs teaching this concept in plain, conversational language. Short paragraphs. Direct. Like explaining to a friend, not lecturing.",
+          "example": "A concrete real-world scenario — not a quiz question, but a situation the student can picture. The kind of example a great professor gives.",
+          "connections": "How this concept relates to what was covered in previous sections. Skip for the first section of each unit.",
+          "keyDistinctions": [
+            "Concept A vs Concept B — one sentence explaining the core difference"
+          ],
+          "checkpoint": {
+            "question": "Low-pressure question confirming the student absorbed the key point",
+            "choices": ["A", "B", "C", "D"],
+            "correctIndex": 0,
+            "explanation": "Brief explanation of why this is correct."
+          }
+        }
+      ],
       "cards": [
         {
           "id": "c1-1",
@@ -54,7 +72,17 @@ ${TEMPLATE_JSON}
 
 **Schema details:**
 
-**Per unit:**
+**Per unit — Lessons (interactive learning content):**
+- \`lessons\` (4-8 per unit): An interactive lesson that teaches the unit's content before the student starts drilling. Each section covers one major concept or cluster of related concepts.
+- \`content\`: 2-4 paragraphs that **teach**, not just define. Don't write "Equity theory is a motivational framework..." Write "Imagine you find out your coworker makes $15,000 more than you for the same work. That pit in your stomach? That's equity theory in action. Here's how it works..." Write conversationally. Short paragraphs. Direct language. The student is reading on their phone, not in a lecture hall.
+- \`example\`: A real-world scenario — not a quiz question, a situation the student can picture. The kind of example a professor gives to make a concept click.
+- \`connections\`: How this concept relates to what was just covered. Every section after the first should reference previous sections. Skip or leave empty for the first section.
+- \`keyDistinctions\`: The pairs students confuse on exams. Clear one-line differentiators like "FIFO vs LIFO — FIFO sells oldest inventory first, LIFO sells newest first."
+- \`checkpoint\`: Low-pressure, not OA-caliber — just confirming the student absorbed the key point.
+- Sections should flow in logical teaching order. Start foundational, build toward complex. The order matters.
+- End the last section of each unit with a takeaway in the content — "remember these 3-5 things from this unit."
+
+**Per unit — Study content:**
 - \`cards\`: Each card has a term, detailed definition, a \`priority\` field, AND a built-in scenario question with 4 choices. Every card IS a question. Each unit should have enough cards to cover every key term, concept, model, framework, law, and theory in that unit. No concept that could appear on the OA should be left out. Some units will have 10 cards, some might have 25 — whatever it takes to be thorough.
 - \`priority\`: \`"high"\` = core concept very likely to appear on the OA (key theories, major frameworks, foundational terms). \`"normal"\` = standard exam material. \`"low"\` = supplementary/nice-to-know. Roughly 25-30% of cards should be high, 50-60% normal, 10-20% low. Be honest about what actually shows up on WGU OAs.
 - \`matchPairs\` (8-12 per unit): Term-definition pairs with SHORT definitions (max 40 chars) that fit match game tiles

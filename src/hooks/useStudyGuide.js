@@ -62,7 +62,13 @@ export function useStudyGuide(courseId) {
     const trueFalsePool = guide?.trueFalsePool || [];
     const fillInBlankPool = guide?.fillInBlankPool || [];
 
-    return { allCards, allQuestions, allMatchPairs, extraQuestions, mockPool, termIdPool, trueFalsePool, fillInBlankPool };
+    // Lesson data
+    const unitsWithLessons = guide
+      ? guide.units.filter(u => Array.isArray(u.lessons) && u.lessons.length > 0)
+      : [];
+    const hasLessons = unitsWithLessons.length > 0;
+
+    return { allCards, allQuestions, allMatchPairs, extraQuestions, mockPool, termIdPool, trueFalsePool, fillInBlankPool, unitsWithLessons, hasLessons };
   }, [guide]);
 
   return {

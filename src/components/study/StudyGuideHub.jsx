@@ -20,6 +20,7 @@ import {
   Users,
   Loader2,
   Tag,
+  GraduationCap,
 } from 'lucide-react';
 import { useStudyGuide, useCardProgress, useQuizHistory, useMissedQuestions, pickRandom, shuffleChoices, getDueCards } from '../../hooks/useStudyGuide';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
@@ -27,6 +28,7 @@ import { formatShortDate, getCourseReadiness, readinessColor, readinessTextColor
 import buildClaudePrompt from '../../lib/buildClaudePrompt';
 import { useCommunityGuide } from '../../hooks/useCommunityGuide';
 import { useAuth } from '../../contexts/AuthContext';
+import LessonView from './LessonView';
 import QuizEngine from './QuizEngine';
 import Flashcards from './Flashcards';
 import RapidFire from './RapidFire';
@@ -41,12 +43,15 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
   const {
     guide, loading, allCards, allQuestions, allMatchPairs,
     extraQuestions, mockPool, termIdPool, trueFalsePool, fillInBlankPool,
+    hasLessons,
   } = useStudyGuide(courseId);
   const { progress } = useCardProgress(courseId);
   const { history, saveResult } = useQuizHistory(courseId);
   const { missedData, recordMiss, recordCorrect, weakSpots } = useMissedQuestions(courseId);
   const [lastStudied, setLastStudied] = useLocalStorage('studyhub-last-studied', {});
+  const [lessonProgress, setLessonProgress] = useLocalStorage(`studyhub-lessons-${courseId}`, {});
   const [activeTool, setActiveTool] = useState(null);
+  const [lessonUnitId, setLessonUnitId] = useState(null);
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [summaryCopied, setSummaryCopied] = useState(false);
   const { user } = useAuth();
@@ -137,6 +142,13 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
   const dueCards = getDueCards(allCards, progress);
   const dueCount = dueCards.length;
   const readinessPct = getCourseReadiness(courseId);
+
+  // Lesson progress
+  const lessonUnits = hasLessons ? guide.units.filter(u => u.lessons?.length > 0) : [];
+  const lessonsCompleteCount = lessonUnits.filter(u => {
+    const prog = lessonProgress[u.id];
+    return Array.isArray(prog) && prog.length === u.lessons.length;
+  }).length;
 
   // Weak spots count: shaky/dont-know cards + missed questions
   const shakyCount = allCards.filter(c => progress[c.id] && (progress[c.id].rating === 'dont-know' || progress[c.id].rating === 'shaky')).length;
@@ -249,6 +261,22 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
       />
     );
   }
+  if (activeTool === 'lesson' && lessonUnitId) {
+    const unit = guide.units.find(u => u.id === lessonUnitId);
+    if (unit?.lessons?.length > 0) {
+      return (
+        <LessonView
+          unit={unit}
+          lessonProgress={lessonProgress[lessonUnitId] || []}
+          onComplete={(completedIds) => {
+            setLessonProgress(prev => ({ ...prev, [lessonUnitId]: completedIds }));
+            handleExit();
+          }}
+          onExit={handleExit}
+        />
+      );
+    }
+  }
   if (activeTool === 'unit-summaries') {
     return <UnitSummaries courseId={courseId} guide={guide} onExit={handleExit} />;
   }
@@ -343,6 +371,69 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
         {/* Left: Study — Flashcards, Unit Summaries, Weak Spots */}
         <div className="flex flex-col gap-2">
           <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider px-1">Study</h3>
+
+          {hasLessons && (
+            <div className="bg-bg-secondary rounded-xl border border-border overflow-hidden card-shadow">
+              <button
+                onClick={() => {
+                  // Find first incomplete lesson unit, or first unit
+                  const nextUnit = lessonUnits.find(u => {
+                    const prog = lessonProgress[u.id];
+                    return !prog || prog.length < u.lessons.length;
+                  }) || lessonUnits[0];
+                  setLessonUnitId(nextUnit.id);
+                  setActiveTool('lesson');
+                  setLastStudied(prev => ({ ...prev, [courseId]: Date.now() }));
+                }}
+                className="w-full flex items-center gap-4 p-4 text-left hover:bg-bg-hover transition-all cursor-pointer"
+              >
+                <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-emerald-500/15">
+                  <GraduationCap className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-text-primary">Learn</p>
+                    {lessonsCompleteCount === lessonUnits.length && (
+                      <span className="text-[10px] font-semibold text-success">All complete</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-text-muted">Interactive lessons that teach before you practice</p>
+                </div>
+                <span className="text-[10px] text-text-muted font-num shrink-0">{lessonsCompleteCount}/{lessonUnits.length}</span>
+              </button>
+              {/* Unit picker — compact list */}
+              {lessonUnits.length > 1 && (
+                <div className="border-t border-border px-2 py-1.5">
+                  <div className="flex flex-wrap gap-1">
+                    {lessonUnits.map((u, i) => {
+                      const prog = lessonProgress[u.id];
+                      const isComplete = Array.isArray(prog) && prog.length === u.lessons.length;
+                      const isStarted = Array.isArray(prog) && prog.length > 0 && !isComplete;
+                      return (
+                        <button
+                          key={u.id}
+                          onClick={() => {
+                            setLessonUnitId(u.id);
+                            setActiveTool('lesson');
+                            setLastStudied(prev => ({ ...prev, [courseId]: Date.now() }));
+                          }}
+                          className={`px-2 py-1 rounded-md text-[10px] font-medium transition-colors ${
+                            isComplete
+                              ? 'bg-success/15 text-success'
+                              : isStarted
+                              ? 'bg-accent-muted text-accent'
+                              : 'bg-bg-tertiary text-text-muted hover:text-text-primary'
+                          }`}
+                        >
+                          U{i + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <BigToolCard
             icon={Layers} label="Flashcards" color="bg-purple-500/15 text-purple-400"

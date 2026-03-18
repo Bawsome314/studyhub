@@ -42,6 +42,10 @@ export function updateGuideIndex(guide) {
   const highPriority = allCards.filter(c => c.priority === 'high').length;
   const hasTermId = (guide.termIdPool?.length || 0) > 0;
 
+  // Lesson metadata
+  const unitsWithLessons = units.filter(u => Array.isArray(u.lessons) && u.lessons.length > 0).length;
+  const totalLessonSections = units.reduce((sum, u) => sum + (u.lessons?.length || 0), 0);
+
   index[guide.courseId] = {
     courseCode: guide.courseCode || '',
     courseName: guide.courseName || '',
@@ -49,6 +53,8 @@ export function updateGuideIndex(guide) {
     highPriorityCount: highPriority,
     hasTermId,
     unitCount: units.length,
+    unitsWithLessons,
+    totalLessonSections,
     tools,
     toolbarTools: Array.isArray(guide.tools) ? guide.tools : [],
   };
