@@ -967,13 +967,13 @@ export default function Settings() {
             </div>
             <div>
               <p className="text-[10px] text-text-muted mb-1.5 uppercase tracking-wider">Light</p>
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="grid grid-cols-3 gap-1.5">
                 {SECRET_THEMES.filter(t => t.row === 'light').map(t => <ThemeButton key={t.id} t={t} />)}
               </div>
             </div>
             <div>
               <p className="text-[10px] text-text-muted mb-1.5 uppercase tracking-wider">Dark</p>
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="grid grid-cols-3 gap-1.5">
                 {SECRET_THEMES.filter(t => t.row === 'dark').map(t => <ThemeButton key={t.id} t={t} />)}
               </div>
             </div>
