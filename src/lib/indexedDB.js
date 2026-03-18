@@ -178,6 +178,37 @@ export async function getGuideMetadata() {
 }
 
 /**
+ * Removes any guides from IndexedDB that are not in the guide index.
+ * Cleans up orphaned data from failed deletions or interrupted syncs.
+ * @returns {Promise<number>} Number of orphaned guides removed.
+ */
+export async function cleanOrphanedGuides() {
+  try {
+    const indexRaw = localStorage.getItem('studyhub-guide-index');
+    const index = indexRaw ? JSON.parse(indexRaw) : {};
+    const validIds = new Set(Object.keys(index));
+
+    const allGuides = await getAllGuides();
+    let removed = 0;
+
+    for (const guide of allGuides) {
+      if (guide.courseId && !validIds.has(guide.courseId)) {
+        await deleteGuide(guide.courseId);
+        removed++;
+      }
+    }
+
+    if (removed > 0) {
+      console.log(`[IndexedDB] Cleaned up ${removed} orphaned guide(s)`);
+    }
+    return removed;
+  } catch (err) {
+    console.error('[IndexedDB] cleanOrphanedGuides failed:', err);
+    return 0;
+  }
+}
+
+/**
  * Returns an estimate of IndexedDB storage usage in bytes using the
  * Storage API. Returns null if the API is unavailable.
  * @returns {Promise<{usage: number, quota: number} | null>}

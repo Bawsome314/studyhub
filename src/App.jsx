@@ -5,6 +5,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { SyncProvider } from './contexts/SyncContext';
 import { migrateGuidesToIndexedDB } from './lib/migrateGuides';
+import { cleanOrphanedGuides } from './lib/indexedDB';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import TermPlan from './pages/TermPlan';
@@ -17,9 +18,9 @@ import Goals from './pages/Goals';
 export default function App() {
   const [updateAvailable, setUpdateAvailable] = useState(null);
 
-  // Fire-and-forget migration from localStorage to IndexedDB
+  // Fire-and-forget migration + cleanup
   useEffect(() => {
-    migrateGuidesToIndexedDB();
+    migrateGuidesToIndexedDB().then(() => cleanOrphanedGuides());
   }, []);
 
   // Listen for service worker updates
