@@ -270,6 +270,9 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
         <LessonView
           unit={unit}
           lessonProgress={lessonProgress[lessonUnitId] || []}
+          onSaveProgress={(completedIds) => {
+            setLessonProgress(prev => ({ ...prev, [lessonUnitId]: completedIds }));
+          }}
           onComplete={(completedIds) => {
             setLessonProgress(prev => ({ ...prev, [lessonUnitId]: completedIds }));
             setActiveTool('lessons-hub');

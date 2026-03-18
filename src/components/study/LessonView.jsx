@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, BookOpen, Lightbulb, Link2, AlertTriangle, ChevronRight } from 'lucide-react';
 import useKeyboardShortcuts from '../../hooks/useKeyboardShortcuts';
 
-export default function LessonView({ unit, lessonProgress, onComplete, onExit }) {
+export default function LessonView({ unit, lessonProgress, onSaveProgress, onComplete, onExit }) {
   const lessons = unit.lessons || [];
   const [currentIdx, setCurrentIdx] = useState(0);
   const [checkpointAnswer, setCheckpointAnswer] = useState(null); // index chosen
@@ -44,10 +44,11 @@ export default function LessonView({ unit, lessonProgress, onComplete, onExit })
     if (checkpointRevealed) return;
     setCheckpointAnswer(idx);
     setCheckpointRevealed(true);
-    // Mark section complete
+    // Mark section complete and persist immediately
     setCompletedSections(prev => {
       const next = new Set(prev);
       next.add(section.id);
+      onSaveProgress(Array.from(next));
       return next;
     });
   }
