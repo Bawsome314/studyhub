@@ -127,6 +127,41 @@ export async function pushKeyToSupabase(userId, key) {
   setLocalTimestamp(key, Date.now());
 }
 
+// Push a single guide to Supabase immediately (call after import)
+export async function pushGuideToSupabase(userId, guide) {
+  if (!supabase || !userId || !guide?.courseId) return;
+
+  const key = `${GUIDE_KEY_PREFIX}${guide.courseId}`;
+  const { error } = await supabase
+    .from('user_data')
+    .upsert(
+      { user_id: userId, key, value: guide },
+      { onConflict: 'user_id,key' }
+    );
+
+  if (error) throw error;
+  setLocalTimestamp(key, Date.now());
+}
+
+// Delete a guide from Supabase (call after local deletion)
+export async function deleteGuideFromSupabase(userId, courseId) {
+  if (!supabase || !userId || !courseId) return;
+
+  const key = `${GUIDE_KEY_PREFIX}${courseId}`;
+  await supabase
+    .from('user_data')
+    .delete()
+    .eq('user_id', userId)
+    .eq('key', key);
+
+  // Clean up local timestamp
+  try {
+    const timestamps = JSON.parse(localStorage.getItem('studyhub-sync-timestamps') || '{}');
+    delete timestamps[key];
+    localStorage.setItem('studyhub-sync-timestamps', JSON.stringify(timestamps));
+  } catch {}
+}
+
 // Sync all study guides between IndexedDB and Supabase
 export async function syncGuides(userId) {
   if (!supabase || !userId) return;
@@ -156,6 +191,11 @@ export async function syncGuides(userId) {
       updateGuideIndex(guide);
       setLocalTimestamp(row.key, remoteTimestamp);
     }
+  }
+
+  // Notify UI that guides may have changed
+  if (remoteRows && remoteRows.length > 0) {
+    window.dispatchEvent(new Event('studyhub-guides-updated'));
   }
 
   // 2. Push local-only guides (in IndexedDB but not in Supabase)

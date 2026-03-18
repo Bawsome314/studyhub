@@ -26,6 +26,7 @@ import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { formatShortDate, getCourseReadiness, readinessColor, readinessTextColor } from '../../utils/studyHelpers';
 import buildClaudePrompt from '../../lib/buildClaudePrompt';
 import { useCommunityGuide } from '../../hooks/useCommunityGuide';
+import { useAuth } from '../../contexts/AuthContext';
 import QuizEngine from './QuizEngine';
 import Flashcards from './Flashcards';
 import RapidFire from './RapidFire';
@@ -48,7 +49,8 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
   const [activeTool, setActiveTool] = useState(null);
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [summaryCopied, setSummaryCopied] = useState(false);
-  const { communityGuide, installing: communityInstalling, loadGuide: loadCommunityGuide } = useCommunityGuide(!guide && !loading ? courseCode : null);
+  const { user } = useAuth();
+  const { communityGuide, installing: communityInstalling, loadGuide: loadCommunityGuide } = useCommunityGuide(!guide && !loading ? courseCode : null, user?.id);
 
   if (loading) {
     return (
@@ -107,10 +109,7 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
                 </div>
               </div>
               <button
-                onClick={async () => {
-                  const loaded = await loadCommunityGuide();
-                  if (loaded) window.location.reload();
-                }}
+                onClick={() => loadCommunityGuide()}
                 disabled={communityInstalling}
                 className="flex items-center gap-1.5 px-4 py-2 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors shrink-0"
               >

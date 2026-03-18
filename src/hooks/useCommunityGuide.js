@@ -3,8 +3,9 @@ import { isSupabaseConfigured } from '../lib/supabase';
 import { checkCommunityGuide, fetchCommunityGuide } from '../lib/communityGuides';
 import { putGuide } from '../lib/indexedDB';
 import { updateGuideIndex } from '../lib/guideIndex';
+import { pushGuideToSupabase } from '../lib/sync';
 
-export function useCommunityGuide(courseCode) {
+export function useCommunityGuide(courseCode, userId) {
   const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(false);
   const [installing, setInstalling] = useState(false);
@@ -33,6 +34,11 @@ export function useCommunityGuide(courseCode) {
       const guide = data.guide_json;
       await putGuide(guide);
       updateGuideIndex(guide);
+      window.dispatchEvent(new Event('studyhub-guides-updated'));
+      // Push to user's Supabase for cross-device sync
+      if (userId) {
+        pushGuideToSupabase(userId, guide).catch(() => {});
+      }
       setInstalling(false);
       return guide;
     } catch {

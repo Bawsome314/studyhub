@@ -13,6 +13,7 @@ import { updateGuideIndex, removeFromGuideIndex, readGuideIndex } from '../lib/g
 import buildClaudePrompt from '../lib/buildClaudePrompt';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { pushGuideToSupabase, deleteGuideFromSupabase } from '../lib/sync';
 import { shareCommunityGuide, fetchAllCommunityGuides, fetchCommunityGuide, deleteCommunityGuide } from '../lib/communityGuides';
 
 export default function Settings() {
@@ -41,6 +42,9 @@ export default function Settings() {
   const { user } = useAuth();
   const canShare = isSupabaseConfigured() && !!user;
 
+  // Counter to force re-read of guide index after mutations
+  const [guideIndexVersion, setGuideIndexVersion] = useState(0);
+
   // Study guides loaded from lightweight index (needed early for community check + course icons)
   const loadedGuides = useMemo(() => {
     try {
@@ -53,7 +57,7 @@ export default function Settings() {
         cards: meta.totalCards || 0,
       }));
     } catch { return []; }
-  }, [importStatus]);
+  }, [guideIndexVersion]);
 
   const guideLoadedSet = useMemo(() => new Set(loadedGuides.map(g => g.courseId)), [loadedGuides]);
 
@@ -154,6 +158,14 @@ export default function Settings() {
         }
         await putGuide(guide);
         updateGuideIndex(guide);
+        setGuideIndexVersion(v => v + 1);
+        window.dispatchEvent(new Event('studyhub-guides-updated'));
+        // Push to Supabase for cross-device sync
+        if (user) {
+          pushGuideToSupabase(user.id, guide).catch(err =>
+            console.error('Failed to push guide to Supabase:', err)
+          );
+        }
         if (shareOnImport && canShare) {
           const existing = await checkCommunityGuide(guide.courseCode || guide.courseId);
           if (existing) {
@@ -175,16 +187,42 @@ export default function Settings() {
     reader.readAsText(file);
   }
 
-  // Storage estimate
+  // Storage estimate — refresh after imports/deletes
   const [storageEstimate, setStorageEstimate] = useState(null);
   useEffect(() => {
     getStorageEstimate().then(est => setStorageEstimate(est));
-  }, [importStatus]);
+  }, [guideIndexVersion]);
 
-  async function deleteStudyGuide(courseId) {
+  async function deleteStudyGuide(courseId, courseCode) {
     try {
+      // Get code from guide index before deleting if not provided
+      if (!courseCode) {
+        const index = readGuideIndex();
+        courseCode = index[courseId]?.courseCode;
+      }
+
+      // 1. Delete from IndexedDB
       await deleteGuideIDB(courseId);
+
+      // 2. Remove from guide index (sync, updates localStorage)
       removeFromGuideIndex(courseId);
+
+      // 3. Delete from Supabase user_data
+      if (user) {
+        await deleteGuideFromSupabase(user.id, courseId).catch(err =>
+          console.error('Failed to delete guide from Supabase:', err)
+        );
+      }
+
+      // 4. Delete from community guides if user was the uploader
+      if (user && courseCode) {
+        await deleteCommunityGuide(courseCode).catch(() => {});
+      }
+
+      // 5. Force UI refresh
+      setGuideIndexVersion(v => v + 1);
+      setCommunityChecked(false); // Re-evaluate community available list
+      window.dispatchEvent(new Event('studyhub-guides-updated'));
       setImportStatus(`Deleted study guide for ${courseId}.`);
     } catch {
       setImportStatus('Failed to delete study guide.');
@@ -202,12 +240,20 @@ export default function Settings() {
     }
   }
 
+  const [themeToast, setThemeToast] = useState(null);
+  const themeToastTimer = useRef(null);
+
   function ThemeButton({ t }) {
     const isActive = theme === t.id;
     return (
       <button
         key={t.id}
-        onClick={() => setTheme(t.id)}
+        onClick={() => {
+          setTheme(t.id);
+          clearTimeout(themeToastTimer.current);
+          setThemeToast(t.name);
+          themeToastTimer.current = setTimeout(() => setThemeToast(null), 1500);
+        }}
         className={`flex items-center gap-2 px-2 py-2 rounded-lg border transition-all w-full ${
           isActive
             ? 'border-accent bg-accent-muted ring-1 ring-accent/30'
@@ -217,7 +263,7 @@ export default function Settings() {
         <div className="w-5 h-5 rounded shrink-0 overflow-hidden ring-1 ring-black/10" style={{ backgroundColor: t.bg }}>
           <div className="w-full h-1" style={{ backgroundColor: t.accent, marginTop: '16px' }} />
         </div>
-        <span className="text-[10px] font-medium text-text-primary leading-tight truncate">{t.name}</span>
+        <span className="text-[10px] font-medium text-text-primary leading-tight truncate hidden sm:inline">{t.name}</span>
       </button>
     );
   }
@@ -238,6 +284,9 @@ export default function Settings() {
         >
           <Palette className="w-4 h-4 text-accent" />
           <h2 className="text-sm font-semibold text-text-primary cursor-default">Theme</h2>
+          {themeToast && (
+            <span className="sm:hidden text-[10px] font-medium text-accent animate-fade-in">{themeToast} selected</span>
+          )}
         </div>
         <div className="bg-bg-secondary rounded-xl border border-border p-5 flex gap-5">
           {/* Presets */}
@@ -326,22 +375,22 @@ export default function Settings() {
               <input type="text" value={profile.program} onChange={e => setProfile(p => ({ ...p, program: e.target.value }))}
                 className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent" />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div>
                 <label className="text-xs text-text-muted block mb-1">Term Start</label>
                 <input type="date" value={profile.termStart} onChange={e => setProfile(p => ({ ...p, termStart: e.target.value }))}
-                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent" />
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary focus:outline-none focus:border-accent" />
               </div>
               <div>
                 <label className="text-xs text-text-muted block mb-1">Term End</label>
                 <input type="date" value={profile.termEnd} onChange={e => setProfile(p => ({ ...p, termEnd: e.target.value }))}
-                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent" />
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary focus:outline-none focus:border-accent" />
               </div>
               <div>
                 <label className="text-xs text-text-muted block mb-1">Program CUs</label>
                 <input type="number" min="1" max="999" value={profile.programCUs || ''} onChange={e => setProfile(p => ({ ...p, programCUs: parseInt(e.target.value) || '' }))}
                   placeholder={String(totalCUs)}
-                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-sm text-text-primary font-num placeholder:text-text-muted focus:outline-none focus:border-accent" />
+                  className="w-full bg-bg-tertiary border border-border rounded-lg px-3 py-2 text-[16px] sm:text-sm text-text-primary font-num placeholder:text-text-muted focus:outline-none focus:border-accent" />
               </div>
             </div>
           </div>
@@ -532,6 +581,14 @@ export default function Settings() {
                   if (!guide.courseId || !guide.units) { setImportStatus('Invalid format.'); setImporting(false); return; }
                   await putGuide(guide);
                   updateGuideIndex(guide);
+                  setGuideIndexVersion(v => v + 1);
+                  window.dispatchEvent(new Event('studyhub-guides-updated'));
+                  // Push to Supabase for cross-device sync
+                  if (user) {
+                    pushGuideToSupabase(user.id, guide).catch(err =>
+                      console.error('Failed to push guide to Supabase:', err)
+                    );
+                  }
                   if (shareOnImport && canShare) {
                     const existing = await checkCommunityGuide(guide.courseCode || guide.courseId);
                     if (existing) {
@@ -589,6 +646,11 @@ export default function Settings() {
                         if (full?.guide_json) {
                           await putGuide(full.guide_json);
                           updateGuideIndex(full.guide_json);
+                          setGuideIndexVersion(v => v + 1);
+                          window.dispatchEvent(new Event('studyhub-guides-updated'));
+                          if (user) {
+                            pushGuideToSupabase(user.id, full.guide_json).catch(() => {});
+                          }
                           setCommunityAvailable(prev => prev.filter(x => x.course_code !== g.course_code));
                           setImportStatus(`Loaded ${g.course_code} from community!`);
                         }
@@ -635,6 +697,11 @@ export default function Settings() {
                       if (full?.guide_json) {
                         await putGuide(full.guide_json);
                         updateGuideIndex(full.guide_json);
+                        setGuideIndexVersion(v => v + 1);
+                        window.dispatchEvent(new Event('studyhub-guides-updated'));
+                        if (user) {
+                          pushGuideToSupabase(user.id, full.guide_json).catch(() => {});
+                        }
                         setImportStatus(`Loaded ${g.course_code} from community!`);
                       }
                     } catch { setImportStatus('Failed to load community guide.'); }
@@ -707,7 +774,7 @@ export default function Settings() {
                       </button>
                     )}
                     <button onClick={() => setConfirmAction({ type: 'reset-progress', id: g.courseId })} className="text-[10px] text-text-muted hover:text-warning transition-colors shrink-0">Reset Progress</button>
-                    <button onClick={() => setConfirmAction({ type: 'delete-guide', id: g.courseId })} className="text-[10px] text-text-muted hover:text-danger transition-colors shrink-0">Delete</button>
+                    <button onClick={() => setConfirmAction({ type: 'delete-guide', id: g.courseId, code: g.code })} className="text-[10px] text-text-muted hover:text-danger transition-colors shrink-0">Delete</button>
                   </div>
                 ))}
               </div>
@@ -803,7 +870,7 @@ export default function Settings() {
         message="This will permanently remove the study guide and all its content. This can't be undone."
         confirmLabel="Delete"
         confirmColor="bg-danger"
-        onConfirm={() => { deleteStudyGuide(confirmAction.id); setConfirmAction(null); }}
+        onConfirm={() => { deleteStudyGuide(confirmAction.id, confirmAction.code); setConfirmAction(null); }}
         onCancel={() => setConfirmAction(null)}
       />
 
@@ -879,6 +946,7 @@ export default function Settings() {
           const action = confirmAction;
           setConfirmAction(null);
           const { error: delErr } = await deleteCommunityGuide(action.code);
+          setCommunityChecked(false); // Re-evaluate community list
           setImportStatus(delErr ? `Failed to remove: ${delErr}` : `${action.code} removed from community.`);
         }}
         onCancel={() => setConfirmAction(null)}
@@ -887,7 +955,7 @@ export default function Settings() {
       {/* Secret themes popup */}
       {secretOpen && createPortal(
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50" onClick={() => setSecretOpen(false)}>
-          <div className="bg-bg-secondary rounded-2xl border border-border p-5 w-full max-w-xs mx-4 space-y-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-bg-secondary rounded-2xl border border-border p-5 w-full max-w-sm mx-4 space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-text-primary">Secret Themes</h3>
@@ -897,8 +965,17 @@ export default function Settings() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
-              {SECRET_THEMES.map(t => <ThemeButton key={t.id} t={t} />)}
+            <div>
+              <p className="text-[10px] text-text-muted mb-1.5 uppercase tracking-wider">Light</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {SECRET_THEMES.filter(t => t.row === 'light').map(t => <ThemeButton key={t.id} t={t} />)}
+              </div>
+            </div>
+            <div>
+              <p className="text-[10px] text-text-muted mb-1.5 uppercase tracking-wider">Dark</p>
+              <div className="grid grid-cols-4 gap-1.5">
+                {SECRET_THEMES.filter(t => t.row === 'dark').map(t => <ThemeButton key={t.id} t={t} />)}
+              </div>
             </div>
           </div>
         </div>,

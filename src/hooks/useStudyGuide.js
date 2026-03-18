@@ -5,6 +5,14 @@ import { getGuide } from '../lib/indexedDB';
 export function useStudyGuide(courseId) {
   const [guide, setGuide] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Re-fetch when guides are updated via sync
+  useEffect(() => {
+    const handler = () => setRefreshKey(k => k + 1);
+    window.addEventListener('studyhub-guides-updated', handler);
+    return () => window.removeEventListener('studyhub-guides-updated', handler);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,7 +37,7 @@ export function useStudyGuide(courseId) {
     });
 
     return () => { cancelled = true; };
-  }, [courseId]);
+  }, [courseId, refreshKey]);
 
   // Derived data - memoized so it only recomputes when guide changes
   const derived = useMemo(() => {
