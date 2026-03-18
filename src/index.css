@@ -218,6 +218,25 @@
   --color-sidebar: #f5ede0;
 }
 
+/* -- Seafoam (Light): Airy coastal teal, clean and refreshing -- */
+[data-theme="seafoam"] {
+  --color-bg-primary: #f0faf8;
+  --color-bg-secondary: #f8fffe;
+  --color-bg-tertiary: #e0f2ee;
+  --color-bg-hover: #d0eae4;
+  --color-border: #b0d8ce;
+  --color-text-primary: #1a2e2a;
+  --color-text-secondary: #3a5a52;
+  --color-text-muted: #6a8a80;
+  --color-accent: #2a9d8f;
+  --color-accent-hover: #21867a;
+  --color-accent-muted: rgba(42, 157, 143, 0.10);
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-sidebar: #e8f6f2;
+}
+
 /* -- Rosé Pine (Dark): Muted rose and lavender on deep plum -- */
 [data-theme="rosepine"] {
   --color-bg-primary: #191724;
