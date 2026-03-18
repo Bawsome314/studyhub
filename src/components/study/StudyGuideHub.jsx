@@ -297,6 +297,13 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
             const isComplete = sectionsDone === sectionsTotal;
             const isStarted = sectionsDone > 0 && !isComplete;
 
+            // Check if review is suggested: lesson complete but cards are struggling
+            const unitCards = unit.cards || [];
+            const weakCount = unitCards.filter(c =>
+              progress[c.id]?.rating === 'dont-know' || progress[c.id]?.rating === 'shaky'
+            ).length;
+            const reviewSuggested = isComplete && unitCards.length > 0 && weakCount >= Math.ceil(unitCards.length * 0.3);
+
             return (
               <button
                 key={unit.id}
@@ -305,12 +312,17 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
                   setActiveTool('lesson');
                   setLastStudied(prev => ({ ...prev, [courseId]: Date.now() }));
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 bg-bg-secondary rounded-xl border border-border text-left hover:bg-bg-hover transition-colors"
+                className={`w-full flex items-center gap-3 px-4 py-3 bg-bg-secondary rounded-xl border text-left hover:bg-bg-hover transition-colors ${
+                  reviewSuggested ? 'border-warning/30' : 'border-border'
+                }`}
               >
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                  reviewSuggested ? 'bg-warning/15' :
                   isComplete ? 'bg-success/15' : 'bg-emerald-500/15'
                 }`}>
-                  {isComplete
+                  {reviewSuggested
+                    ? <AlertTriangle className="w-4.5 h-4.5 text-warning" />
+                    : isComplete
                     ? <CheckCircle2 className="w-4.5 h-4.5 text-success" />
                     : <GraduationCap className="w-4.5 h-4.5 text-emerald-400" />
                   }
@@ -319,7 +331,8 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
                   <p className="text-sm font-medium text-text-primary truncate">{unit.name}</p>
                   <div className="flex items-center gap-2 text-[10px] mt-0.5">
                     <span className="text-text-muted">{sectionsTotal} sections</span>
-                    {isComplete && <span className="text-success font-medium">Complete</span>}
+                    {reviewSuggested && <span className="text-warning font-medium">Review suggested</span>}
+                    {!reviewSuggested && isComplete && <span className="text-success font-medium">Complete</span>}
                     {isStarted && <span className="text-accent font-medium">{sectionsDone}/{sectionsTotal} done</span>}
                   </div>
                 </div>
@@ -438,7 +451,14 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
               meta={`${lessonsCompleteCount}/${lessonUnits.length} units`}
               badge={lessonsCompleteCount === lessonUnits.length ? 'All complete' : null}
               badgeColor="text-success"
-              onClick={() => setActiveTool('lessons-hub')}
+              onClick={() => {
+                setActiveTool('lessons-hub');
+                try {
+                  localStorage.setItem('studyhub-last-session', JSON.stringify({
+                    courseId, mode: 'lessons-hub', timestamp: Date.now(),
+                  }));
+                } catch {}
+              }}
             />
           )}
 

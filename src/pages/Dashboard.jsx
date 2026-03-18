@@ -21,6 +21,7 @@ import { Link } from 'react-router-dom';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useCourses } from '../hooks/useCourses';
 import { timeAgo, getBestPracticeOa, getCourseReadiness } from '../utils/studyHelpers';
+import { readGuideIndex } from '../lib/guideIndex';
 import AnimatedNumber from '../components/AnimatedNumber';
 
 function StatCard({ icon: Icon, label, value, color, fading }) {
@@ -114,6 +115,8 @@ const MODE_LABELS = {
   'match-game': 'Match',
   'unit-summaries': 'Unit Summaries',
   'weak-spots': 'Weak Spots',
+  'lesson': 'Lesson',
+  'lessons-hub': 'Lessons',
 };
 
 function LiveClock() {
@@ -234,6 +237,26 @@ export default function Dashboard() {
       return { ...session, course };
     } catch { return null; }
   }, [courses]);
+
+  // Next lesson nudge — find a course with incomplete lessons
+  const lessonNudge = useMemo(() => {
+    try {
+      const guideIndex = readGuideIndex();
+      for (const course of inProgressCourses) {
+        const meta = guideIndex[course.id];
+        if (!meta || !meta.unitsWithLessons || meta.unitsWithLessons === 0) continue;
+        const progressRaw = localStorage.getItem(`studyhub-lessons-${course.id}`);
+        const progress = progressRaw ? JSON.parse(progressRaw) : {};
+        const completedUnits = Object.values(progress).filter(
+          (sections) => Array.isArray(sections) && sections.length > 0
+        ).length;
+        if (completedUnits < meta.unitsWithLessons) {
+          return { course, completed: completedUnits, total: meta.unitsWithLessons };
+        }
+      }
+    } catch {}
+    return null;
+  }, [inProgressCourses]);
 
   // Top weak spots across all courses
   const topWeakSpots = useMemo(() => {
@@ -390,6 +413,23 @@ export default function Dashboard() {
             </p>
           </div>
           <span className="text-[10px] font-num text-text-muted shrink-0">{timeAgo(lastSession.timestamp)}</span>
+          <ArrowRight className="w-4 h-4 text-text-muted shrink-0" />
+        </Link>
+      )}
+
+      {/* Lesson Nudge */}
+      {lessonNudge && (
+        <Link
+          to={`/course/${lessonNudge.course.id}`}
+          className="flex items-center gap-4 bg-bg-secondary rounded-xl border border-emerald-500/20 p-4 hover:border-emerald-500/40 transition-all card-hover"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+            <BookOpen className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-text-muted">Continue learning</p>
+            <p className="text-sm font-semibold text-text-primary">{lessonNudge.course.code} — {lessonNudge.completed}/{lessonNudge.total} lessons done</p>
+          </div>
           <ArrowRight className="w-4 h-4 text-text-muted shrink-0" />
         </Link>
       )}

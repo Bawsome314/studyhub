@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2, XCircle, BookOpen, Lightbulb, Link2, AlertTriangle, ChevronRight } from 'lucide-react';
+import useKeyboardShortcuts from '../../hooks/useKeyboardShortcuts';
 
 export default function LessonView({ unit, lessonProgress, onComplete, onExit }) {
   const lessons = unit.lessons || [];
@@ -13,6 +14,24 @@ export default function LessonView({ unit, lessonProgress, onComplete, onExit })
   const section = lessons[currentIdx];
   const isLastSection = currentIdx === lessons.length - 1;
   const allComplete = completedSections.size === lessons.length;
+
+  // Keyboard shortcuts: arrows for nav, 1-4 for checkpoint, Enter for next/finish
+  useKeyboardShortcuts({
+    ArrowLeft: () => { if (currentIdx > 0) setCurrentIdx(i => i - 1); },
+    ArrowRight: () => { if (!isLastSection) setCurrentIdx(i => i + 1); },
+    '1': () => { if (section?.checkpoint && !checkpointRevealed) handleCheckpointSelect(0); },
+    '2': () => { if (section?.checkpoint && !checkpointRevealed) handleCheckpointSelect(1); },
+    '3': () => { if (section?.checkpoint && !checkpointRevealed) handleCheckpointSelect(2); },
+    '4': () => { if (section?.checkpoint && !checkpointRevealed) handleCheckpointSelect(3); },
+    Enter: () => {
+      if (allComplete && isLastSection && checkpointRevealed) {
+        onComplete(Array.from(completedSections));
+      } else if (checkpointRevealed && !isLastSection) {
+        setCurrentIdx(i => i + 1);
+      }
+    },
+    Escape: () => onExit(),
+  });
 
   // Scroll to top when section changes
   useEffect(() => {
