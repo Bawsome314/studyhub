@@ -21,6 +21,8 @@ import {
   Loader2,
   Tag,
   GraduationCap,
+  ArrowLeft,
+  CheckCircle2,
 } from 'lucide-react';
 import { useStudyGuide, useCardProgress, useQuizHistory, useMissedQuestions, pickRandom, shuffleChoices, getDueCards } from '../../hooks/useStudyGuide';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
@@ -270,12 +272,69 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
           lessonProgress={lessonProgress[lessonUnitId] || []}
           onComplete={(completedIds) => {
             setLessonProgress(prev => ({ ...prev, [lessonUnitId]: completedIds }));
-            handleExit();
+            setActiveTool('lessons-hub');
           }}
-          onExit={handleExit}
+          onExit={() => setActiveTool('lessons-hub')}
         />
       );
     }
+  }
+  if (activeTool === 'lessons-hub') {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <button onClick={handleExit} className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+          <span className="text-xs text-text-muted">{lessonsCompleteCount}/{lessonUnits.length} units complete</span>
+        </div>
+
+        <div className="space-y-2">
+          {lessonUnits.map((unit) => {
+            const prog = lessonProgress[unit.id];
+            const sectionsDone = Array.isArray(prog) ? prog.length : 0;
+            const sectionsTotal = unit.lessons.length;
+            const isComplete = sectionsDone === sectionsTotal;
+            const isStarted = sectionsDone > 0 && !isComplete;
+
+            return (
+              <button
+                key={unit.id}
+                onClick={() => {
+                  setLessonUnitId(unit.id);
+                  setActiveTool('lesson');
+                  setLastStudied(prev => ({ ...prev, [courseId]: Date.now() }));
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-bg-secondary rounded-xl border border-border text-left hover:bg-bg-hover transition-colors"
+              >
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                  isComplete ? 'bg-success/15' : 'bg-emerald-500/15'
+                }`}>
+                  {isComplete
+                    ? <CheckCircle2 className="w-4.5 h-4.5 text-success" />
+                    : <GraduationCap className="w-4.5 h-4.5 text-emerald-400" />
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-text-primary truncate">{unit.name}</p>
+                  <div className="flex items-center gap-2 text-[10px] mt-0.5">
+                    <span className="text-text-muted">{sectionsTotal} sections</span>
+                    {isComplete && <span className="text-success font-medium">Complete</span>}
+                    {isStarted && <span className="text-accent font-medium">{sectionsDone}/{sectionsTotal} done</span>}
+                  </div>
+                </div>
+                <div className="w-12 h-1.5 bg-bg-tertiary rounded-full overflow-hidden shrink-0">
+                  <div
+                    className={`h-full rounded-full transition-all ${isComplete ? 'bg-success' : 'bg-accent'}`}
+                    style={{ width: sectionsTotal > 0 ? `${(sectionsDone / sectionsTotal) * 100}%` : '0%' }}
+                  />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
   }
   if (activeTool === 'unit-summaries') {
     return <UnitSummaries courseId={courseId} guide={guide} onExit={handleExit} />;
@@ -373,66 +432,14 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
           <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider px-1">Study</h3>
 
           {hasLessons && (
-            <div className="bg-bg-secondary rounded-xl border border-border overflow-hidden card-shadow">
-              <button
-                onClick={() => {
-                  // Find first incomplete lesson unit, or first unit
-                  const nextUnit = lessonUnits.find(u => {
-                    const prog = lessonProgress[u.id];
-                    return !prog || prog.length < u.lessons.length;
-                  }) || lessonUnits[0];
-                  setLessonUnitId(nextUnit.id);
-                  setActiveTool('lesson');
-                  setLastStudied(prev => ({ ...prev, [courseId]: Date.now() }));
-                }}
-                className="w-full flex items-center gap-4 p-4 text-left hover:bg-bg-hover transition-all cursor-pointer"
-              >
-                <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-emerald-500/15">
-                  <GraduationCap className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-text-primary">Learn</p>
-                    {lessonsCompleteCount === lessonUnits.length && (
-                      <span className="text-[10px] font-semibold text-success">All complete</span>
-                    )}
-                  </div>
-                  <p className="text-xs text-text-muted">Interactive lessons that teach before you practice</p>
-                </div>
-                <span className="text-[10px] text-text-muted font-num shrink-0">{lessonsCompleteCount}/{lessonUnits.length}</span>
-              </button>
-              {/* Unit picker — compact list */}
-              {lessonUnits.length > 1 && (
-                <div className="border-t border-border px-2 py-1.5">
-                  <div className="flex flex-wrap gap-1">
-                    {lessonUnits.map((u, i) => {
-                      const prog = lessonProgress[u.id];
-                      const isComplete = Array.isArray(prog) && prog.length === u.lessons.length;
-                      const isStarted = Array.isArray(prog) && prog.length > 0 && !isComplete;
-                      return (
-                        <button
-                          key={u.id}
-                          onClick={() => {
-                            setLessonUnitId(u.id);
-                            setActiveTool('lesson');
-                            setLastStudied(prev => ({ ...prev, [courseId]: Date.now() }));
-                          }}
-                          className={`px-2 py-1 rounded-md text-[10px] font-medium transition-colors ${
-                            isComplete
-                              ? 'bg-success/15 text-success'
-                              : isStarted
-                              ? 'bg-accent-muted text-accent'
-                              : 'bg-bg-tertiary text-text-muted hover:text-text-primary'
-                          }`}
-                        >
-                          U{i + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+            <BigToolCard
+              icon={GraduationCap} label="Learn" color="bg-emerald-500/15 text-emerald-400"
+              desc="Interactive lessons that teach before you practice"
+              meta={`${lessonsCompleteCount}/${lessonUnits.length} units`}
+              badge={lessonsCompleteCount === lessonUnits.length ? 'All complete' : null}
+              badgeColor="text-success"
+              onClick={() => setActiveTool('lessons-hub')}
+            />
           )}
 
           <BigToolCard
