@@ -200,6 +200,7 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
       localStorage.setItem('studyhub-last-session', JSON.stringify({
         courseId, mode: toolId, timestamp: Date.now(),
       }));
+      window.dispatchEvent(new CustomEvent('studyhub-storage-write', { detail: { key: 'studyhub-last-session' } }));
     } catch {}
   }
 
@@ -460,6 +461,7 @@ export default function StudyGuideHub({ courseId, courseCode, courseName }) {
                   localStorage.setItem('studyhub-last-session', JSON.stringify({
                     courseId, mode: 'lessons-hub', timestamp: Date.now(),
                   }));
+                  window.dispatchEvent(new CustomEvent('studyhub-storage-write', { detail: { key: 'studyhub-last-session' } }));
                 } catch {}
               }}
             />

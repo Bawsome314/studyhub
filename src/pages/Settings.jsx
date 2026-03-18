@@ -132,9 +132,11 @@ export default function Settings() {
         Object.entries(data).forEach(([key, value]) => {
           if (key.startsWith('studyhub-')) {
             localStorage.setItem(key, JSON.stringify(value));
+            window.dispatchEvent(new CustomEvent('studyhub-storage-write', { detail: { key } }));
           }
         });
-        setImportStatus('Data imported successfully. Reload the page to see changes.');
+        window.dispatchEvent(new Event('studyhub-sync-pull'));
+        setImportStatus('Data imported successfully!');
       } catch {
         setImportStatus('Invalid JSON file.');
       }
@@ -230,9 +232,17 @@ export default function Settings() {
 
   function resetCourseProgress(courseId) {
     try {
-      localStorage.removeItem(`studyhub-cards-${courseId}`);
-      localStorage.removeItem(`studyhub-quiz-history-${courseId}`);
-      localStorage.removeItem(`studyhub-missed-${courseId}`);
+      const keysToRemove = [
+        `studyhub-cards-${courseId}`,
+        `studyhub-quiz-history-${courseId}`,
+        `studyhub-missed-${courseId}`,
+        `studyhub-lessons-${courseId}`,
+      ];
+      for (const key of keysToRemove) {
+        localStorage.removeItem(key);
+        // Notify sync layer so deletion propagates to Supabase
+        window.dispatchEvent(new CustomEvent('studyhub-storage-write', { detail: { key } }));
+      }
       setImportStatus(`Progress reset for ${courseId}.`);
     } catch {
       setImportStatus('Failed to reset progress. Storage may be unavailable.');
