@@ -2,9 +2,16 @@ import { supabase } from './supabase';
 import { putGuide, getGuide, getAllGuides } from './indexedDB';
 import { updateGuideIndex } from './guideIndex';
 
-// Keys that should sync to Supabase (everything except theme which is device-local)
+// Keys that should sync to Supabase (everything except device-local/internal keys)
 const SYNC_PREFIX = 'studyhub-';
-const SKIP_KEYS = ['studyhub-theme'];
+const SKIP_KEYS = [
+  'studyhub-theme',
+  'studyhub-custom-theme',
+  'studyhub-sync-timestamps',
+  'studyhub-deleted-guides',
+  'studyhub-last-session',
+  'studyhub-guide-index',  // rebuilt locally from IndexedDB by syncGuides
+];
 const GUIDE_KEY_PREFIX = 'studyhub-guide-data:';
 const DELETED_GUIDES_KEY = 'studyhub-deleted-guides';
 
@@ -58,30 +65,21 @@ export async function pullFromSupabase(userId) {
 
   if (error) throw error;
 
-  const deletedIds = getDeletedGuideIds();
   let pulled = 0;
   for (const row of data || []) {
-    // Skip guide data for guides that were explicitly deleted on this device
-    if (isGuideKey(row.key)) {
-      const courseId = row.key.replace(GUIDE_KEY_PREFIX, '');
-      if (deletedIds.has(courseId)) continue;
-    }
+    // Guide data is handled exclusively by syncGuides() — skip here to avoid
+    // double-processing and timestamp conflicts
+    if (isGuideKey(row.key)) continue;
+
+    // Skip the guide index too — syncGuides rebuilds it from actual guide data
+    if (row.key === 'studyhub-guide-index') continue;
 
     const localTimestamp = getLocalTimestamp(row.key);
     const remoteTimestamp = new Date(row.updated_at).getTime();
 
     // Remote wins if newer, or if no local data exists
     if (!localTimestamp || remoteTimestamp > localTimestamp) {
-      if (isGuideKey(row.key)) {
-        // Guide data goes to IndexedDB, not localStorage
-        const guide = row.value;
-        if (guide && guide.courseId) {
-          await putGuide(guide);
-          updateGuideIndex(guide);
-        }
-      } else {
-        localStorage.setItem(row.key, JSON.stringify(row.value));
-      }
+      localStorage.setItem(row.key, JSON.stringify(row.value));
       setLocalTimestamp(row.key, remoteTimestamp);
       pulled++;
     }
@@ -247,11 +245,6 @@ export async function syncGuides(userId) {
     }
   }
 
-  // Notify UI that guides may have changed
-  if (guidesChanged) {
-    window.dispatchEvent(new Event('studyhub-guides-updated'));
-  }
-
   // 2. Push local-only guides (in IndexedDB but not in Supabase)
   const localGuides = await getAllGuides();
   const pushRows = [];
@@ -276,6 +269,18 @@ export async function syncGuides(userId) {
     for (const row of pushRows) {
       setLocalTimestamp(row.key, now);
     }
+    guidesChanged = true;
+  }
+
+  // Always rebuild guide index from IndexedDB to ensure consistency
+  if (guidesChanged) {
+    const allLocal = await getAllGuides();
+    for (const guide of allLocal) {
+      if (guide?.courseId && !deletedIds.has(guide.courseId)) {
+        updateGuideIndex(guide);
+      }
+    }
+    window.dispatchEvent(new Event('studyhub-guides-updated'));
   }
 }
 

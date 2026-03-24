@@ -67,9 +67,8 @@ export function SyncProvider({ children }) {
       await fullSync(user.id);
       setSyncStatus('synced');
       setLastSynced(new Date());
-      // Dispatch events so UI re-reads localStorage and IndexedDB
+      // Dispatch event so useLocalStorage hooks re-read from localStorage
       window.dispatchEvent(new Event('studyhub-sync-pull'));
-      window.dispatchEvent(new Event('studyhub-guides-updated'));
     } catch (err) {
       console.error('Sync error:', err);
       setSyncStatus('error');
