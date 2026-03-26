@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx vite:*)",
+      "WebFetch(domain:www.wgu.edu)",
+      "WebFetch(domain:www.google.com)",
+      "WebFetch(domain:www.reddit.com)",
+      "WebFetch(domain:partners.wgu.edu)",
+      "WebFetch(domain:srm--c.vf.force.com)",
+      "WebFetch(domain:www.coursehero.com)",
+      "WebFetch(domain:wgu.hosted.panopto.com)",
+      "WebFetch(domain:www.studocu.com)",
+      "WebFetch(domain:cm.wgu.edu)",
+      "WebFetch(domain:lrps.wgu.edu)",
+      "WebFetch(domain:www.wgustudenthandbook.com)",
+      "WebFetch(domain:quizlet.com)",
+      "WebFetch(domain:wgu.libguides.com)",
+      "Bash(python3 -c \"\nimport pymupdf\ndoc = pymupdf.open\\('C:/Users/brand/.claude/projects/C--Users-brand-studyhub/80ee828f-ca49-4dbb-b0a2-4d680baef53f/tool-results/webfetch-1773370525370-ws45ul.pdf'\\)\nprint\\(f'Total pages: {doc.page_count}'\\)\nfor i in range\\(doc.page_count\\):\n    text = doc[i].get_text\\(\\)\n    if 'BSFIN' in text or 'Bachelor of Science, Finance' in text:\n        print\\(f'--- Page {i+1} ---'\\)\n        print\\(text[:3000]\\)\n        print\\('...'\\)\n\")",
+      "Bash(where python:*)",
+      "Bash(C:/Python314/python.exe -c \"\nimport pymupdf\ndoc = pymupdf.open\\('C:/Users/brand/.claude/projects/C--Users-brand-studyhub/80ee828f-ca49-4dbb-b0a2-4d680baef53f/tool-results/webfetch-1773370525370-ws45ul.pdf'\\)\nprint\\(f'Total pages: {doc.page_count}'\\)\nfor i in range\\(doc.page_count\\):\n    text = doc[i].get_text\\(\\)\n    if 'BSFIN' in text or 'Bachelor of Science, Finance' in text:\n        print\\(f'--- Page {i+1} ---'\\)\n        print\\(text[:3000]\\)\n        print\\('...'\\)\n\")",
+      "Bash(curl -s http://localhost:5173 2>/dev/null | head -3 || echo \"waiting...\")",
+      "Bash(taskkill //F //IM node.exe 2>&1)",
+      "Bash(git:*)",
+      "Bash(npx mammoth:*)",
+      "Bash(node:*)"
+    ]
+  }
+}

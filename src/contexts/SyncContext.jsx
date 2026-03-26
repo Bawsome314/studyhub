@@ -1,20 +1,19 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { fullSync, pushKeyToSupabase } from '../lib/sync';
+import { fullSync, pushKeyNow } from '../lib/sync';
 
 const SyncContext = createContext();
 
-const DEBOUNCE_MS = 2000;
-const PERIODIC_SYNC_MS = 5 * 60 * 1000; // 5 minutes
+const PERIODIC_SYNC_MS = 3 * 60 * 1000; // 3 minutes
 
 export function SyncProvider({ children }) {
   const { user } = useAuth();
   const [syncStatus, setSyncStatus] = useState('idle'); // idle | syncing | synced | error
   const [lastSynced, setLastSynced] = useState(null);
   const [syncError, setSyncError] = useState(null);
-  const pendingKeysRef = useRef(new Set());
-  const debounceTimerRef = useRef(null);
   const periodicTimerRef = useRef(null);
+  const pushQueueRef = useRef(new Set());
+  const pushingRef = useRef(false);
 
   // Full sync on login / mount
   useEffect(() => {
@@ -26,7 +25,7 @@ export function SyncProvider({ children }) {
 
     doFullSync();
 
-    // Periodic sync
+    // Periodic sync (every 3 minutes)
     periodicTimerRef.current = setInterval(doFullSync, PERIODIC_SYNC_MS);
 
     // Sync on tab focus
@@ -43,21 +42,52 @@ export function SyncProvider({ children }) {
     };
   }, [user]);
 
-  // Listen for localStorage writes from useLocalStorage
+  // Listen for writes and push IMMEDIATELY (no debounce)
   useEffect(() => {
     if (!user) return;
 
     const handleStorageSync = (e) => {
       const key = e.detail?.key;
-      if (key && key.startsWith('studyhub-') && key !== 'studyhub-theme' && key !== 'studyhub-sync-timestamps' && !key.startsWith('studyhub-guide-data:')) {
-        pendingKeysRef.current.add(key);
-        debouncedPush();
-      }
+      if (!key || !key.startsWith('studyhub-')) return;
+      // Skip internal keys
+      if (key === 'studyhub-theme' || key === 'studyhub-custom-theme' ||
+          key === 'studyhub-sync-timestamps' || key === 'studyhub-deleted-guides' ||
+          key === 'studyhub-last-session' || key === 'studyhub-guide-index' ||
+          key.startsWith('studyhub-guide-data:')) return;
+
+      pushQueueRef.current.add(key);
+      flushPushQueue();
     };
 
     window.addEventListener('studyhub-storage-write', handleStorageSync);
     return () => window.removeEventListener('studyhub-storage-write', handleStorageSync);
   }, [user]);
+
+  const flushPushQueue = useCallback(async () => {
+    if (!user || pushingRef.current || pushQueueRef.current.size === 0) return;
+    pushingRef.current = true;
+
+    const keys = [...pushQueueRef.current];
+    pushQueueRef.current.clear();
+
+    try {
+      for (const key of keys) {
+        await pushKeyNow(user.id, key);
+      }
+      setLastSynced(new Date());
+      if (syncStatus !== 'syncing') setSyncStatus('synced');
+    } catch (err) {
+      console.error('Push error:', err);
+      // Re-queue failed keys for retry
+      for (const key of keys) pushQueueRef.current.add(key);
+    }
+    pushingRef.current = false;
+
+    // If more keys queued while we were pushing, flush again
+    if (pushQueueRef.current.size > 0) {
+      setTimeout(flushPushQueue, 100);
+    }
+  }, [user, syncStatus]);
 
   const doFullSync = useCallback(async () => {
     if (!user) return;
@@ -67,34 +97,14 @@ export function SyncProvider({ children }) {
       await fullSync(user.id);
       setSyncStatus('synced');
       setLastSynced(new Date());
-      // Dispatch event so useLocalStorage hooks re-read from localStorage
+      // Notify all hooks to re-read from localStorage
       window.dispatchEvent(new Event('studyhub-sync-pull'));
+      window.dispatchEvent(new Event('studyhub-guides-updated'));
     } catch (err) {
       console.error('Sync error:', err);
       setSyncStatus('error');
       setSyncError(err.message);
     }
-  }, [user]);
-
-  const debouncedPush = useCallback(() => {
-    clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(async () => {
-      if (!user || pendingKeysRef.current.size === 0) return;
-
-      const keys = [...pendingKeysRef.current];
-      pendingKeysRef.current.clear();
-
-      try {
-        for (const key of keys) {
-          await pushKeyToSupabase(user.id, key);
-        }
-        setLastSynced(new Date());
-        setSyncStatus('synced');
-      } catch (err) {
-        console.error('Push error:', err);
-        // Don't set error status for individual pushes - they'll retry on next sync
-      }
-    }, DEBOUNCE_MS);
   }, [user]);
 
   const manualSync = useCallback(() => doFullSync(), [doFullSync]);
