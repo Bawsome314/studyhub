@@ -4,18 +4,20 @@ import { fullSync, pushKeyNow } from '../lib/sync';
 
 const SyncContext = createContext();
 
-const PERIODIC_SYNC_MS = 3 * 60 * 1000; // 3 minutes
+const PERIODIC_SYNC_MS = 3 * 60 * 1000;
 
 export function SyncProvider({ children }) {
   const { user } = useAuth();
-  const [syncStatus, setSyncStatus] = useState('idle'); // idle | syncing | synced | error
+  const [syncStatus, setSyncStatus] = useState('idle');
   const [lastSynced, setLastSynced] = useState(null);
   const [syncError, setSyncError] = useState(null);
   const periodicTimerRef = useRef(null);
-  const pushQueueRef = useRef(new Set());
-  const pushingRef = useRef(false);
 
-  // Full sync on login / mount
+  // Push queue and lock
+  const pushQueueRef = useRef(new Set());
+  const syncLockRef = useRef(false); // true when fullSync is running
+
+  // Full sync on login
   useEffect(() => {
     if (!user) {
       setSyncStatus('idle');
@@ -25,10 +27,8 @@ export function SyncProvider({ children }) {
 
     doFullSync();
 
-    // Periodic sync (every 3 minutes)
     periodicTimerRef.current = setInterval(doFullSync, PERIODIC_SYNC_MS);
 
-    // Sync on tab focus
     const handleVisibility = () => {
       if (document.visibilityState === 'visible' && user) {
         doFullSync();
@@ -42,21 +42,25 @@ export function SyncProvider({ children }) {
     };
   }, [user]);
 
-  // Listen for writes and push IMMEDIATELY (no debounce)
+  // Listen for writes → push immediately (unless sync is running)
   useEffect(() => {
     if (!user) return;
 
     const handleStorageSync = (e) => {
       const key = e.detail?.key;
       if (!key || !key.startsWith('studyhub-')) return;
-      // Skip internal keys
       if (key === 'studyhub-theme' || key === 'studyhub-custom-theme' ||
           key === 'studyhub-sync-timestamps' || key === 'studyhub-deleted-guides' ||
           key === 'studyhub-last-session' || key === 'studyhub-guide-index' ||
           key.startsWith('studyhub-guide-data:')) return;
 
       pushQueueRef.current.add(key);
-      flushPushQueue();
+
+      // If fullSync is NOT running, push immediately
+      if (!syncLockRef.current) {
+        flushPushQueue();
+      }
+      // If fullSync IS running, the queue will flush after it completes
     };
 
     window.addEventListener('studyhub-storage-write', handleStorageSync);
@@ -64,8 +68,7 @@ export function SyncProvider({ children }) {
   }, [user]);
 
   const flushPushQueue = useCallback(async () => {
-    if (!user || pushingRef.current || pushQueueRef.current.size === 0) return;
-    pushingRef.current = true;
+    if (!user || pushQueueRef.current.size === 0) return;
 
     const keys = [...pushQueueRef.current];
     pushQueueRef.current.clear();
@@ -75,37 +78,41 @@ export function SyncProvider({ children }) {
         await pushKeyNow(user.id, key);
       }
       setLastSynced(new Date());
-      if (syncStatus !== 'syncing') setSyncStatus('synced');
     } catch (err) {
-      console.error('Push error:', err);
-      // Re-queue failed keys for retry
+      console.error('[Sync] Push failed:', err);
+      // Re-queue for retry
       for (const key of keys) pushQueueRef.current.add(key);
     }
-    pushingRef.current = false;
-
-    // If more keys queued while we were pushing, flush again
-    if (pushQueueRef.current.size > 0) {
-      setTimeout(flushPushQueue, 100);
-    }
-  }, [user, syncStatus]);
+  }, [user]);
 
   const doFullSync = useCallback(async () => {
-    if (!user) return;
+    if (!user || syncLockRef.current) return;
+    syncLockRef.current = true;
     setSyncStatus('syncing');
     setSyncError(null);
+
     try {
+      // Step 1: Flush any pending pushes FIRST so Supabase has our latest
+      await flushPushQueue();
+
+      // Step 2: Now pull + push + sync guides
       await fullSync(user.id);
+
+      // Step 3: Flush anything that queued during sync
+      await flushPushQueue();
+
       setSyncStatus('synced');
       setLastSynced(new Date());
-      // Notify all hooks to re-read from localStorage
       window.dispatchEvent(new Event('studyhub-sync-pull'));
       window.dispatchEvent(new Event('studyhub-guides-updated'));
     } catch (err) {
-      console.error('Sync error:', err);
+      console.error('[Sync] Full sync error:', err);
       setSyncStatus('error');
       setSyncError(err.message);
+    } finally {
+      syncLockRef.current = false;
     }
-  }, [user]);
+  }, [user, flushPushQueue]);
 
   const manualSync = useCallback(() => doFullSync(), [doFullSync]);
 

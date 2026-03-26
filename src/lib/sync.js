@@ -78,7 +78,7 @@ export async function pushKeyNow(userId, key) {
 // ═══ PULL — Supabase wins for all localStorage data ═══
 
 export async function pullFromSupabase(userId) {
-  if (!supabase || !userId) return { pulled: 0 };
+  if (!supabase || !userId) return { pulled: 0, remoteKeys: new Set() };
 
   const { data, error } = await supabase
     .from('user_data')
@@ -91,13 +91,13 @@ export async function pullFromSupabase(userId) {
   const remoteKeys = new Set();
 
   for (const row of data || []) {
-    if (isGuideKey(row.key)) continue; // handled by syncGuides
-    if (row.key === 'studyhub-guide-index') continue; // rebuilt locally
+    if (isGuideKey(row.key)) continue;
+    if (row.key === 'studyhub-guide-index') continue;
     if (SKIP_KEYS.includes(row.key)) continue;
 
     remoteKeys.add(row.key);
 
-    // ALWAYS write remote data — Supabase is source of truth
+    // Supabase is source of truth — overwrite local
     const remoteValue = JSON.stringify(row.value);
     const localValue = localStorage.getItem(row.key);
 
@@ -110,15 +110,18 @@ export async function pullFromSupabase(userId) {
   return { pulled, remoteKeys };
 }
 
-// ═══ PUSH — push all local keys to Supabase ═══
+// ═══ PUSH — only push keys that Supabase doesn't have yet ═══
 
-export async function pushToSupabase(userId) {
+export async function pushNewKeysToSupabase(userId, remoteKeys) {
   if (!supabase || !userId) return { pushed: 0 };
 
-  const keys = getAllLocalKeys();
-  if (keys.length === 0) return { pushed: 0 };
+  const localKeys = getAllLocalKeys();
+  // Only push keys that Supabase didn't return (new local-only data)
+  const newKeys = localKeys.filter(k => !remoteKeys.has(k));
 
-  const rows = keys.map(key => {
+  if (newKeys.length === 0) return { pushed: 0 };
+
+  const rows = newKeys.map(key => {
     let value;
     try { value = JSON.parse(localStorage.getItem(key)); }
     catch { value = localStorage.getItem(key); }
@@ -130,7 +133,7 @@ export async function pushToSupabase(userId) {
     .upsert(rows, { onConflict: 'user_id,key' });
 
   if (error) throw error;
-  return { pushed: keys.length };
+  return { pushed: newKeys.length };
 }
 
 // ═══ GUIDE SYNC — IndexedDB ↔ Supabase ═══
@@ -232,10 +235,11 @@ export async function fullSync(userId) {
   if (!supabase || !userId) return { pulled: 0, pushed: 0 };
 
   // 1. Pull everything from Supabase (remote wins)
-  const { pulled } = await pullFromSupabase(userId);
+  const { pulled, remoteKeys } = await pullFromSupabase(userId);
 
-  // 2. Push local data to Supabase (new local keys get uploaded)
-  const { pushed } = await pushToSupabase(userId);
+  // 2. Push ONLY keys that don't exist in Supabase yet (local-only data)
+  // Keys that already exist in Supabase were just pulled — don't overwrite them
+  const { pushed } = await pushNewKeysToSupabase(userId, remoteKeys);
 
   // 3. Sync guides (IndexedDB ↔ Supabase)
   await syncGuides(userId);
