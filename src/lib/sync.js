@@ -232,13 +232,12 @@ export async function syncGuides(userId) {
 // ═══ FULL SYNC — the main entry point ═══
 
 export async function fullSync(userId) {
-  if (!supabase || !userId) return { pulled: 0, pushed: 0 };
+  if (!supabase || !userId) return { pulled: 0 };
 
-  // 1. Pull everything from Supabase (remote wins)
+  // 1. Pull all localStorage data from Supabase (Supabase wins)
   const { pulled, remoteKeys } = await pullFromSupabase(userId);
 
-  // 2. Push ONLY keys that don't exist in Supabase yet (local-only data)
-  // Keys that already exist in Supabase were just pulled — don't overwrite them
+  // 2. Push any local-only keys (keys that exist locally but not in Supabase)
   const { pushed } = await pushNewKeysToSupabase(userId, remoteKeys);
 
   // 3. Sync guides (IndexedDB ↔ Supabase)
