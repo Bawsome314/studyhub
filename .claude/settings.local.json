@@ -23,7 +23,9 @@
       "Bash(taskkill //F //IM node.exe 2>&1)",
       "Bash(git:*)",
       "Bash(npx mammoth:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(ls C:/Users/brand/studyhub/public/sw* C:/Users/brand/studyhub/dist/sw* C:/Users/brand/studyhub/src/sw*)",
+      "Bash(grep -r \"serviceWorker\\\\|workbox\\\\|sw\\\\.js\" C:/Users/brand/studyhub/src/main.jsx C:/Users/brand/studyhub/index.html C:/Users/brand/studyhub/vite.config.*)"
     ]
   }
 }

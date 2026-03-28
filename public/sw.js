@@ -26,6 +26,9 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
+  // NEVER cache Supabase API requests — always go to network
+  if (url.hostname.includes('supabase')) return;
+
   // Network-first for HTML and JS — always get latest from server
   if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('.js')) {
     event.respondWith(
