@@ -98,7 +98,10 @@ export async function pullFromSupabase(userId) {
 
     remoteKeys.add(row.key);
 
-    const remoteValue = JSON.stringify(row.value);
+    // Write the value in the same format it was stored:
+    // - Objects/arrays: JSON.stringify (what useLocalStorage uses)
+    // - Strings: store raw (what ThemeContext and other direct writers use)
+    const remoteValue = typeof row.value === 'string' ? row.value : JSON.stringify(row.value);
     const localValue = localStorage.getItem(row.key);
 
     if (remoteValue !== localValue) {
