@@ -87,6 +87,8 @@ export async function pullFromSupabase(userId) {
 
   if (error) throw error;
 
+  console.log(`[Sync] Pull: got ${(data || []).length} rows from Supabase`);
+
   let pulled = 0;
   const remoteKeys = new Set();
 
@@ -97,16 +99,23 @@ export async function pullFromSupabase(userId) {
 
     remoteKeys.add(row.key);
 
-    // Supabase is source of truth — overwrite local
     const remoteValue = JSON.stringify(row.value);
     const localValue = localStorage.getItem(row.key);
 
     if (remoteValue !== localValue) {
+      // Log what's being overwritten
+      const localPreview = localValue ? localValue.substring(0, 80) : '(empty)';
+      const remotePreview = remoteValue.substring(0, 80);
+      console.log(`[Sync] Pull overwriting ${row.key}:`);
+      console.log(`  LOCAL:  ${localPreview}`);
+      console.log(`  REMOTE: ${remotePreview}`);
+
       localStorage.setItem(row.key, remoteValue);
       pulled++;
     }
   }
 
+  console.log(`[Sync] Pull complete: ${pulled} keys updated`);
   return { pulled, remoteKeys };
 }
 
@@ -279,14 +288,19 @@ async function pushLocalChangesToSupabase(userId) {
     rows.push({ user_id: userId, key, value });
   }
 
-  if (rows.length === 0) return;
+  if (rows.length === 0) {
+    console.log('[Sync] Pre-pull push: nothing to push (all empty defaults)');
+    return;
+  }
+
+  console.log(`[Sync] Pre-pull push: uploading ${rows.length} keys:`, rows.map(r => r.key));
 
   const { error } = await supabase
     .from('user_data')
     .upsert(rows, { onConflict: 'user_id,key' });
 
-  if (error) console.error('[Sync] Push local changes failed:', error);
-  else console.log(`[Sync] Pushed ${rows.length} non-empty keys to Supabase`);
+  if (error) console.error('[Sync] Pre-pull push FAILED:', error);
+  else console.log(`[Sync] Pre-pull push: SUCCESS (${rows.length} keys)`);
 }
 
 // ═══ FORCE SYNC — nuclear reset, clear all local, re-pull everything ═══
