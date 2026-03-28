@@ -411,6 +411,29 @@ export default function Settings() {
             <h2 className="text-sm font-semibold text-text-primary">Cloud Sync</h2>
           </div>
           <AuthSection />
+          {user && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={async () => {
+                  if (!confirm('Force sync will clear all local data and re-download everything from the cloud. This fixes sync issues but takes a moment. Continue?')) return;
+                  setImportStatus('Force syncing...');
+                  try {
+                    const { forceSync } = await import('../lib/sync');
+                    await forceSync(user.id);
+                    window.dispatchEvent(new Event('studyhub-sync-pull'));
+                    window.dispatchEvent(new Event('studyhub-guides-updated'));
+                    setImportStatus('Force sync complete! All data refreshed from cloud.');
+                    setGuideIndexVersion(v => v + 1);
+                  } catch (err) {
+                    setImportStatus('Force sync failed: ' + err.message);
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-2 border border-warning/30 rounded-lg text-xs text-warning hover:bg-warning/10 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" /> Force Sync from Cloud
+              </button>
+            </div>
+          )}
         </section>
       </div>
 

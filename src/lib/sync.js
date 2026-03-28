@@ -234,14 +234,42 @@ export async function syncGuides(userId) {
 export async function fullSync(userId) {
   if (!supabase || !userId) return { pulled: 0 };
 
-  // 1. Pull all localStorage data from Supabase (Supabase wins)
   const { pulled, remoteKeys } = await pullFromSupabase(userId);
-
-  // 2. Push any local-only keys (keys that exist locally but not in Supabase)
   const { pushed } = await pushNewKeysToSupabase(userId, remoteKeys);
-
-  // 3. Sync guides (IndexedDB ↔ Supabase)
   await syncGuides(userId);
 
   return { pulled, pushed };
+}
+
+// ═══ FORCE SYNC — nuclear reset, clear all local, re-pull everything ═══
+
+export async function forceSync(userId) {
+  if (!supabase || !userId) throw new Error('Not signed in');
+
+  // Clear all studyhub localStorage keys (except theme)
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('studyhub-') && key !== 'studyhub-theme' && key !== 'studyhub-custom-theme') {
+      keysToRemove.push(key);
+    }
+  }
+  for (const key of keysToRemove) {
+    localStorage.removeItem(key);
+  }
+
+  // Clear IndexedDB guides
+  try {
+    const guides = await getAllGuides();
+    for (const guide of guides) {
+      if (guide.courseId) await deleteGuide(guide.courseId);
+    }
+  } catch (e) {
+    console.error('[ForceSync] IndexedDB clear error:', e);
+  }
+
+  // Pull fresh from Supabase
+  await fullSync(userId);
+
+  return { cleared: keysToRemove.length };
 }

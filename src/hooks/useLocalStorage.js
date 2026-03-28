@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
-// Keys that should NOT sync to Supabase
+// ═══ SYNC CONFIG ═══
+
 const NO_SYNC = new Set([
   'studyhub-theme',
   'studyhub-custom-theme',
-  'studyhub-sync-timestamps',
   'studyhub-deleted-guides',
   'studyhub-last-session',
   'studyhub-guide-index',
@@ -16,42 +16,137 @@ function shouldSync(key) {
     !key.startsWith('studyhub-guide-data:');
 }
 
-// Get current user ID from supabase session (cached)
+// ═══ AUTH CACHE ═══
+
 let _cachedUserId = null;
-async function getUserId() {
-  if (_cachedUserId) return _cachedUserId;
-  if (!supabase) return null;
-  try {
-    const { data } = await supabase.auth.getSession();
-    _cachedUserId = data?.session?.user?.id || null;
-    return _cachedUserId;
-  } catch { return null; }
+function getUserId() {
+  return _cachedUserId;
 }
 
-// Listen for auth changes to update cached user ID
 if (supabase) {
+  supabase.auth.getSession().then(({ data }) => {
+    _cachedUserId = data?.session?.user?.id || null;
+  });
   supabase.auth.onAuthStateChange((_event, session) => {
     _cachedUserId = session?.user?.id || null;
+    // On sign-in, flush any pending writes
+    if (_cachedUserId) flushPendingWrites();
   });
 }
 
-// Push a single key to Supabase — fire and forget, no await in the hook
+// ═══ OFFLINE QUEUE ═══
+// When offline or Supabase write fails, writes queue here.
+// On reconnect, they flush to Supabase.
+
+const PENDING_KEY = 'studyhub-pending-writes';
+
+function getPendingWrites() {
+  try {
+    return JSON.parse(localStorage.getItem(PENDING_KEY) || '{}');
+  } catch { return {}; }
+}
+
+function addPendingWrite(key, value) {
+  const pending = getPendingWrites();
+  pending[key] = { value, timestamp: Date.now() };
+  localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+}
+
+function removePendingWrite(key) {
+  const pending = getPendingWrites();
+  delete pending[key];
+  localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+}
+
+function clearAllPending() {
+  localStorage.removeItem(PENDING_KEY);
+}
+
+// ═══ ONLINE STATUS ═══
+
+let _isOnline = navigator.onLine;
+
+window.addEventListener('online', () => {
+  _isOnline = true;
+  window.dispatchEvent(new Event('studyhub-online-change'));
+  flushPendingWrites();
+});
+window.addEventListener('offline', () => {
+  _isOnline = false;
+  window.dispatchEvent(new Event('studyhub-online-change'));
+});
+
+export function isOnline() { return _isOnline; }
+
+// ═══ PUSH TO SUPABASE ═══
+
 function pushToSupabase(key, value) {
   if (!supabase || !shouldSync(key)) return;
 
-  getUserId().then(userId => {
-    if (!userId) return;
+  const userId = getUserId();
+  if (!userId) {
+    // Not signed in — queue for later
+    addPendingWrite(key, value);
+    return;
+  }
 
-    if (value === null || value === undefined) {
-      supabase.from('user_data').delete().eq('user_id', userId).eq('key', key)
-        .then(({ error }) => { if (error) console.error('[Sync] Delete failed:', key, error); });
+  if (!_isOnline) {
+    // Offline — queue for reconnect
+    addPendingWrite(key, value);
+    return;
+  }
+
+  // Online + signed in — push immediately
+  const doWrite = (value === null || value === undefined)
+    ? supabase.from('user_data').delete().eq('user_id', userId).eq('key', key)
+    : supabase.from('user_data').upsert({ user_id: userId, key, value }, { onConflict: 'user_id,key' });
+
+  doWrite.then(({ error }) => {
+    if (error) {
+      console.error('[Sync] Push failed, queuing:', key, error.message);
+      addPendingWrite(key, value);
     } else {
-      supabase.from('user_data')
-        .upsert({ user_id: userId, key, value }, { onConflict: 'user_id,key' })
-        .then(({ error }) => { if (error) console.error('[Sync] Push failed:', key, error); });
+      // Success — remove from pending if it was there
+      removePendingWrite(key);
     }
   });
 }
+
+// Flush all pending writes to Supabase
+async function flushPendingWrites() {
+  if (!supabase || !_isOnline) return;
+  const userId = getUserId();
+  if (!userId) return;
+
+  const pending = getPendingWrites();
+  const keys = Object.keys(pending);
+  if (keys.length === 0) return;
+
+  console.log(`[Sync] Flushing ${keys.length} pending writes...`);
+
+  for (const key of keys) {
+    const { value } = pending[key];
+    try {
+      const op = (value === null || value === undefined)
+        ? supabase.from('user_data').delete().eq('user_id', userId).eq('key', key)
+        : supabase.from('user_data').upsert({ user_id: userId, key, value }, { onConflict: 'user_id,key' });
+
+      const { error } = await op;
+      if (!error) {
+        removePendingWrite(key);
+      } else {
+        console.error('[Sync] Flush failed for:', key, error.message);
+      }
+    } catch (err) {
+      console.error('[Sync] Flush error:', key, err);
+    }
+  }
+}
+
+// Export for force sync
+export { flushPendingWrites, clearAllPending };
+
+// ═══ THE HOOK ═══
 
 export function useLocalStorage(key, initialValue) {
   const [storedValue, setStoredValue] = useState(() => {
@@ -69,19 +164,16 @@ export function useLocalStorage(key, initialValue) {
   useEffect(() => {
     try {
       const json = JSON.stringify(storedValue);
-      // Don't re-write if the value hasn't actually changed
       if (json === lastWrittenRef.current) return;
       lastWrittenRef.current = json;
       localStorage.setItem(key, json);
 
-      // Push to Supabase immediately (fire and forget)
+      // Push to Supabase (queues if offline/failed)
       pushToSupabase(key, storedValue);
 
       // Notify other hook instances on this page
       window.dispatchEvent(new CustomEvent('studyhub-storage-write', { detail: { key } }));
-    } catch {
-      // Storage full or unavailable
-    }
+    } catch {}
   }, [key, storedValue]);
 
   // Re-read when another hook instance writes to the same key
@@ -97,7 +189,6 @@ export function useLocalStorage(key, initialValue) {
         } catch {}
       }
     };
-
     window.addEventListener('studyhub-storage-write', handleStorageWrite);
     return () => window.removeEventListener('studyhub-storage-write', handleStorageWrite);
   }, [key]);
@@ -113,7 +204,6 @@ export function useLocalStorage(key, initialValue) {
         }
       } catch {}
     };
-
     window.addEventListener('studyhub-sync-pull', handleSyncPull);
     return () => window.removeEventListener('studyhub-sync-pull', handleSyncPull);
   }, [key]);

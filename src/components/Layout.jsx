@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { X, Keyboard } from 'lucide-react';
+import { X, Keyboard, WifiOff } from 'lucide-react';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import FloatingToolbar from './FloatingToolbar';
 import KeyboardShortcuts from './KeyboardShortcuts';
+import { isOnline } from '../hooks/useLocalStorage';
 
 const LEGAL = {
   terms: {
@@ -109,10 +110,29 @@ export default function Layout() {
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
+  const [online, setOnline] = useState(isOnline());
+  useEffect(() => {
+    const handler = () => setOnline(isOnline());
+    window.addEventListener('studyhub-online-change', handler);
+    window.addEventListener('online', handler);
+    window.addEventListener('offline', handler);
+    return () => {
+      window.removeEventListener('studyhub-online-change', handler);
+      window.removeEventListener('online', handler);
+      window.removeEventListener('offline', handler);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-bg-primary">
+      {!online && (
+        <div className="fixed top-0 left-0 right-0 z-[999] bg-warning/90 text-black text-center py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-2">
+          <WifiOff className="w-3.5 h-3.5" />
+          Offline — progress won't sync until you reconnect
+        </div>
+      )}
       <Sidebar />
-      <main className="lg:ml-[260px] min-h-screen pb-20 lg:pb-0 flex flex-col">
+      <main className={`lg:ml-[260px] min-h-screen pb-20 lg:pb-0 flex flex-col ${!online ? 'pt-8' : ''}`}>
         <div key={location.pathname} className="max-w-[1150px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 page-enter flex-1">
           <Outlet />
         </div>

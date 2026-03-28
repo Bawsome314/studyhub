@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { fullSync } from '../lib/sync';
+import { fullSync, forceSync as forceSyncFn } from '../lib/sync';
 
 const SyncContext = createContext();
 
