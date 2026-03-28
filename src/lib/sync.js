@@ -261,22 +261,21 @@ export async function syncGuides(userId) {
 export async function fullSync(userId) {
   if (!supabase || !userId) return { pulled: 0 };
 
-  // Wait for any in-flight pushes to complete before pulling
-  const { hasPendingPushes } = await import('../hooks/useLocalStorage.js');
-  if (hasPendingPushes()) {
-    console.log('[Sync] Waiting for in-flight pushes...');
-    // Wait up to 5 seconds for pushes to complete
-    for (let i = 0; i < 50; i++) {
-      await new Promise(r => setTimeout(r, 100));
-      if (!hasPendingPushes()) break;
-    }
-    if (hasPendingPushes()) {
-      console.log('[Sync] Still have pending pushes — flushing queue');
-    }
-  }
-
-  // Flush any pending offline writes before pulling
+  // Flush pending writes (batched) — MUST complete before pull
   await flushBeforePull(userId);
+
+  // Wait for ALL in-flight pushes to complete — no timeout, must finish
+  const { hasPendingPushes } = await import('../hooks/useLocalStorage.js');
+  let waitCount = 0;
+  while (hasPendingPushes() && waitCount < 100) {
+    await new Promise(r => setTimeout(r, 100));
+    waitCount++;
+  }
+  if (hasPendingPushes()) {
+    console.log('[Sync] ABORTING pull — still have pending pushes after 10s');
+    return { pulled: 0, pushed: 0 };
+  }
+  console.log('[Sync] All pushes complete, safe to pull');
 
   // Now pull — Supabase has our latest, so overwriting local is safe
   const { pulled, remoteKeys } = await pullFromSupabase(userId);

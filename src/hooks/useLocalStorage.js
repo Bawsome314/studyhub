@@ -135,7 +135,7 @@ function pushToSupabase(key, value) {
     });
 }
 
-// Flush all pending writes to Supabase
+// Flush all pending writes to Supabase — BATCHED into one request
 async function flushPendingWrites() {
   if (!supabase || !_isOnline) return;
   const userId = getUserId();
@@ -145,31 +145,41 @@ async function flushPendingWrites() {
   const keys = Object.keys(pending);
   if (keys.length === 0) return;
 
-  console.log(`[Sync] Flushing ${keys.length} pending writes...`);
+  console.log(`[Sync] Flushing ${keys.length} pending writes (batched)...`);
 
+  // Batch all writes into a single upsert
+  const rows = [];
   for (const key of keys) {
     const { value } = pending[key];
-    try {
-      const op = (value === null || value === undefined)
-        ? supabase.from('user_data').delete().eq('user_id', userId).eq('key', key)
-        : supabase.from('user_data').upsert({ user_id: userId, key, value }, { onConflict: 'user_id,key' });
+    if (value !== null && value !== undefined) {
+      rows.push({ user_id: userId, key, value });
+    }
+  }
 
-      const { error } = await op;
+  if (rows.length > 0) {
+    try {
+      const { error } = await supabase
+        .from('user_data')
+        .upsert(rows, { onConflict: 'user_id,key' });
+
       if (!error) {
-        removePendingWrite(key);
+        console.log(`[Sync] Flushed ${rows.length} pending writes OK`);
+        clearAllPending();
       } else {
-        console.error('[Sync] Flush failed for:', key, error.message);
+        console.error('[Sync] Batch flush failed:', error.message);
       }
     } catch (err) {
-      console.error('[Sync] Flush error:', key, err);
+      console.error('[Sync] Batch flush error:', err);
     }
+  } else {
+    clearAllPending();
   }
 }
 
-// On page unload: save all user-changed keys to pending queue
-// so they flush on next page load
+// On page unload: only save keys that have in-flight pushes
+// Don't blindly dump everything — that causes 99-write flushes
 window.addEventListener('beforeunload', () => {
-  for (const key of _userChangedKeys) {
+  for (const key of _inFlightPushes) {
     if (!shouldSync(key)) continue;
     let value;
     try { value = JSON.parse(localStorage.getItem(key)); } catch { continue; }
