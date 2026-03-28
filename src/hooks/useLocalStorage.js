@@ -88,6 +88,12 @@ export function isOnline() { return _isOnline; }
 
 // ═══ PUSH TO SUPABASE ═══
 
+// Track in-flight pushes so sync can wait for them
+const _inFlightPushes = new Set();
+export function hasPendingPushes() {
+  return _inFlightPushes.size > 0 || Object.keys(getPendingWrites()).length > 0;
+}
+
 function pushToSupabase(key, value) {
   if (!supabase || !shouldSync(key)) return;
 
@@ -104,19 +110,29 @@ function pushToSupabase(key, value) {
     return;
   }
 
-  // Online + signed in — push immediately
+  // Track this push as in-flight
+  _inFlightPushes.add(key);
+
   const doWrite = (value === null || value === undefined)
     ? supabase.from('user_data').delete().eq('user_id', userId).eq('key', key)
     : supabase.from('user_data').upsert({ user_id: userId, key, value }, { onConflict: 'user_id,key' });
 
-  doWrite.then(({ error }) => {
-    if (error) {
-      console.error('[Sync] Push FAILED:', key, error.message);
+  doWrite
+    .then(({ error }) => {
+      _inFlightPushes.delete(key);
+      if (error) {
+        console.error('[Sync] Push FAILED:', key, error.message);
+        addPendingWrite(key, value);
+      } else {
+        console.log('[Sync] Push OK:', key);
+        removePendingWrite(key);
+      }
+    })
+    .catch(err => {
+      _inFlightPushes.delete(key);
+      console.error('[Sync] Push ERROR:', key, err);
       addPendingWrite(key, value);
-    } else {
-      removePendingWrite(key);
-    }
-  });
+    });
 }
 
 // Flush all pending writes to Supabase

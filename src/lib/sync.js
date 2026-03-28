@@ -261,6 +261,20 @@ export async function syncGuides(userId) {
 export async function fullSync(userId) {
   if (!supabase || !userId) return { pulled: 0 };
 
+  // Wait for any in-flight pushes to complete before pulling
+  const { hasPendingPushes } = await import('../hooks/useLocalStorage.js');
+  if (hasPendingPushes()) {
+    console.log('[Sync] Waiting for in-flight pushes...');
+    // Wait up to 5 seconds for pushes to complete
+    for (let i = 0; i < 50; i++) {
+      await new Promise(r => setTimeout(r, 100));
+      if (!hasPendingPushes()) break;
+    }
+    if (hasPendingPushes()) {
+      console.log('[Sync] Still have pending pushes — flushing queue');
+    }
+  }
+
   // Flush any pending offline writes before pulling
   await flushBeforePull(userId);
 

@@ -8,14 +8,14 @@ const THEMES = [
   // Dark row
   { id: 'dark', name: 'Dark', preview: '#3b82f6', bg: '#121214', accent: '#3b82f6', row: 'dark' },
   { id: 'midnight', name: 'Midnight', preview: '#8b5cf6', bg: '#0a0c18', accent: '#8b5cf6', row: 'dark' },
-  { id: 'charcoal', name: 'Charcoal', preview: '#f97316', bg: '#0f0f0f', accent: '#f97316', row: 'dark' },
+  { id: 'cyber', name: 'Cyber', preview: '#00ff41', bg: '#0a0a0a', accent: '#00ff41', row: 'dark' },
 ];
 
 const SECRET_THEMES = [
   { id: 'lavender', name: 'Lavender', preview: '#7c6aef', bg: '#f5f3ff', accent: '#7c6aef', row: 'light' },
   { id: 'nord', name: 'Nord', preview: '#88c0d0', bg: '#2e3440', accent: '#88c0d0', row: 'dark' },
   { id: 'rosepine', name: 'Rosé', preview: '#c4a7e7', bg: '#191724', accent: '#c4a7e7', row: 'dark' },
-  { id: 'cyber', name: 'Cyber', preview: '#00ff41', bg: '#0a0a0a', accent: '#00ff41', row: 'dark' },
+  { id: 'charcoal', name: 'Charcoal', preview: '#f97316', bg: '#0f0f0f', accent: '#f97316', row: 'dark' },
 ];
 
 const ALL_THEMES = [...THEMES, ...SECRET_THEMES];
