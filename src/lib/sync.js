@@ -276,13 +276,15 @@ export async function fullSync(userId) {
   return { pulled, pushed };
 }
 
-// Flush pending offline writes before pulling
+// Flush pending writes before pulling — these are writes that were
+// in-flight when the page unloaded, saved to the pending queue
 async function flushBeforePull(userId) {
   if (!supabase || !userId) return;
 
   try {
     const { flushPendingWrites } = await import('../hooks/useLocalStorage.js');
     await flushPendingWrites();
+    console.log('[Sync] Pending writes flushed before pull');
   } catch (e) {
     console.error('[Sync] Flush pending failed:', e);
   }

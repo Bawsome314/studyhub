@@ -150,6 +150,19 @@ async function flushPendingWrites() {
   }
 }
 
+// On page unload: save all user-changed keys to pending queue
+// so they flush on next page load
+window.addEventListener('beforeunload', () => {
+  for (const key of _userChangedKeys) {
+    if (!shouldSync(key)) continue;
+    let value;
+    try { value = JSON.parse(localStorage.getItem(key)); } catch { continue; }
+    if (value !== null && value !== undefined) {
+      addPendingWrite(key, value);
+    }
+  }
+});
+
 // Export for force sync
 export { flushPendingWrites, clearAllPending };
 
