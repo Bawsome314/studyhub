@@ -156,6 +156,15 @@ export { flushPendingWrites, clearAllPending };
 
 // ═══ THE HOOK ═══
 
+// Global tracker: keys that have been written by USER ACTIONS (not mount defaults).
+// Only keys in this set are allowed to push to Supabase.
+const _userChangedKeys = new Set();
+
+// Called when a sync pull writes data — marks those keys as "real" so they can push
+export function markKeyAsReal(key) {
+  _userChangedKeys.add(key);
+}
+
 export function useLocalStorage(key, initialValue) {
   const [storedValue, setStoredValue] = useState(() => {
     try {
@@ -167,32 +176,30 @@ export function useLocalStorage(key, initialValue) {
   });
 
   const lastWrittenRef = useRef(null);
-  const isFirstRender = useRef(true);
-  const hadExistingData = useRef(localStorage.getItem(key) !== null);
+  const mountedRef = useRef(false);
 
   // Write to localStorage AND push to Supabase
   useEffect(() => {
     try {
       const json = JSON.stringify(storedValue);
       if (json === lastWrittenRef.current) return;
-
-      const isMount = isFirstRender.current;
-      isFirstRender.current = false;
       lastWrittenRef.current = json;
       localStorage.setItem(key, json);
 
-      // CRITICAL: Don't push to Supabase on initial mount if we're just
-      // writing the default value. This prevents empty defaults from
-      // overwriting real data in Supabase.
-      if (isMount && !hadExistingData.current) {
-        // This is a default initialization — don't push to Supabase
+      // Only push to Supabase if this key has been changed by a USER ACTION.
+      // On mount, components write default values — those must NEVER push.
+      // After the first user-initiated change, the key is marked as "real"
+      // and all subsequent writes push normally.
+      if (!mountedRef.current) {
+        mountedRef.current = true;
+        // First write from this hook instance — don't push, it's the mount default
         return;
       }
 
-      // User-initiated change OR existing data loaded — push to Supabase
+      // Mark this key as user-changed and push
+      _userChangedKeys.add(key);
       pushToSupabase(key, storedValue);
 
-      // Notify other hook instances on this page
       window.dispatchEvent(new CustomEvent('studyhub-storage-write', { detail: { key } }));
     } catch {}
   }, [key, storedValue]);

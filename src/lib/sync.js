@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { putGuide, getGuide, getAllGuides, deleteGuide } from './indexedDB';
 import { updateGuideIndex, readGuideIndex, removeFromGuideIndex } from './guideIndex';
+import { markKeyAsReal } from '../hooks/useLocalStorage';
 
 const SYNC_PREFIX = 'studyhub-';
 // Keys that are device-local only — never push/pull these
@@ -103,7 +104,25 @@ export async function pullFromSupabase(userId) {
     const localValue = localStorage.getItem(row.key);
 
     if (remoteValue !== localValue) {
-      // Log what's being overwritten
+      // Safety check: don't overwrite real local data with empty remote data.
+      // This handles the case where empty defaults were previously pushed to Supabase.
+      const remoteEmpty = remoteValue === '[]' || remoteValue === '{}' || remoteValue === '""' || remoteValue === 'null';
+      const localHasData = localValue && localValue !== '[]' && localValue !== '{}' && localValue !== '""' && localValue !== 'null';
+
+      if (remoteEmpty && localHasData) {
+        console.log(`[Sync] Pull SKIPPING ${row.key}: remote is empty but local has data (fixing Supabase)`);
+        // Push the real local data UP to fix Supabase
+        let value;
+        try { value = JSON.parse(localValue); } catch { value = localValue; }
+        supabase.from('user_data')
+          .upsert({ user_id: userId, key: row.key, value }, { onConflict: 'user_id,key' })
+          .then(({ error }) => {
+            if (error) console.error('[Sync] Fix push failed:', row.key, error);
+            else console.log('[Sync] Fixed Supabase:', row.key);
+          });
+        continue;
+      }
+
       const localPreview = localValue ? localValue.substring(0, 80) : '(empty)';
       const remotePreview = remoteValue.substring(0, 80);
       console.log(`[Sync] Pull overwriting ${row.key}:`);
@@ -111,6 +130,7 @@ export async function pullFromSupabase(userId) {
       console.log(`  REMOTE: ${remotePreview}`);
 
       localStorage.setItem(row.key, remoteValue);
+      markKeyAsReal(row.key);
       pulled++;
     }
   }
@@ -243,10 +263,8 @@ export async function syncGuides(userId) {
 export async function fullSync(userId) {
   if (!supabase || !userId) return { pulled: 0 };
 
-  // CRITICAL: Push local changes to Supabase BEFORE pulling.
-  // This prevents the pull from overwriting changes that haven't been uploaded yet.
-  // Only pushes non-empty values to avoid wiping Supabase with defaults.
-  await pushLocalChangesToSupabase(userId);
+  // Flush any pending offline writes before pulling
+  await flushBeforePull(userId);
 
   // Now pull — Supabase has our latest, so overwriting local is safe
   const { pulled, remoteKeys } = await pullFromSupabase(userId);
@@ -260,47 +278,16 @@ export async function fullSync(userId) {
   return { pulled, pushed };
 }
 
-// Push local data to Supabase before pulling.
-// Only pushes keys that have REAL data (not empty defaults).
-async function pushLocalChangesToSupabase(userId) {
+// Flush pending offline writes before pulling
+async function flushBeforePull(userId) {
   if (!supabase || !userId) return;
 
-  // Flush any pending writes from the offline queue first
-  const { flushPendingWrites } = await import('../hooks/useLocalStorage.js');
-  await flushPendingWrites();
-
-  const keys = getAllLocalKeys();
-  if (keys.length === 0) return;
-
-  // Filter out empty/default values that would wipe real Supabase data
-  const rows = [];
-  for (const key of keys) {
-    let value;
-    try { value = JSON.parse(localStorage.getItem(key)); }
-    catch { value = localStorage.getItem(key); }
-
-    // Skip empty arrays, empty objects, empty strings, null
-    if (value === null || value === undefined) continue;
-    if (Array.isArray(value) && value.length === 0) continue;
-    if (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0) continue;
-    if (value === '') continue;
-
-    rows.push({ user_id: userId, key, value });
+  try {
+    const { flushPendingWrites } = await import('../hooks/useLocalStorage.js');
+    await flushPendingWrites();
+  } catch (e) {
+    console.error('[Sync] Flush pending failed:', e);
   }
-
-  if (rows.length === 0) {
-    console.log('[Sync] Pre-pull push: nothing to push (all empty defaults)');
-    return;
-  }
-
-  console.log(`[Sync] Pre-pull push: uploading ${rows.length} keys:`, rows.map(r => r.key));
-
-  const { error } = await supabase
-    .from('user_data')
-    .upsert(rows, { onConflict: 'user_id,key' });
-
-  if (error) console.error('[Sync] Pre-pull push FAILED:', error);
-  else console.log(`[Sync] Pre-pull push: SUCCESS (${rows.length} keys)`);
 }
 
 // ═══ FORCE SYNC — nuclear reset, clear all local, re-pull everything ═══
