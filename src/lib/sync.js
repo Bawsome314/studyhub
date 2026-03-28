@@ -79,14 +79,27 @@ export async function pushKeyNow(userId, key) {
 export async function pullFromSupabase(userId) {
   if (!supabase || !userId) return { pulled: 0, remoteKeys: new Set() };
 
-  const { data, error } = await supabase
+  const { data: rawData, error } = await supabase
     .from('user_data')
     .select('key, value, updated_at')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false }); // newest first
 
   if (error) throw error;
 
-  console.log(`[Sync] Pull: got ${(data || []).length} rows from Supabase`);
+  // DEDUPLICATE: keep only the newest row per key
+  const seen = new Set();
+  const data = [];
+  for (const row of rawData || []) {
+    if (!seen.has(row.key)) {
+      seen.add(row.key);
+      data.push(row);
+    }
+    // else: duplicate row — skip (older version)
+  }
+
+  const dupeCount = (rawData || []).length - data.length;
+  console.log(`[Sync] Pull: got ${(rawData || []).length} rows, ${dupeCount} duplicates removed, ${data.length} unique keys`);
 
   let pulled = 0;
   const remoteKeys = new Set();
@@ -276,6 +289,9 @@ export async function syncGuides(userId) {
 export async function fullSync(userId) {
   if (!supabase || !userId) return { pulled: 0 };
 
+  // Clean up any duplicate rows first
+  await cleanupDuplicates(userId);
+
   // Flush pending writes (batched) — MUST complete before pull
   await flushBeforePull(userId);
 
@@ -320,8 +336,54 @@ async function flushBeforePull(userId) {
 
 // ═══ FORCE SYNC — nuclear reset, clear all local, re-pull everything ═══
 
+// Delete duplicate rows in Supabase, keeping only the newest per key
+export async function cleanupDuplicates(userId) {
+  if (!supabase || !userId) return 0;
+
+  const { data, error } = await supabase
+    .from('user_data')
+    .select('id, key, updated_at')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false });
+
+  if (error) { console.error('[Sync] Cleanup query failed:', error); return 0; }
+
+  const seen = new Set();
+  const dupeIds = [];
+  for (const row of data || []) {
+    if (seen.has(row.key)) {
+      dupeIds.push(row.id); // older duplicate
+    } else {
+      seen.add(row.key);
+    }
+  }
+
+  if (dupeIds.length === 0) {
+    console.log('[Sync] No duplicates found');
+    return 0;
+  }
+
+  console.log(`[Sync] Deleting ${dupeIds.length} duplicate rows...`);
+
+  // Delete in batches of 50
+  for (let i = 0; i < dupeIds.length; i += 50) {
+    const batch = dupeIds.slice(i, i + 50);
+    const { error: delErr } = await supabase
+      .from('user_data')
+      .delete()
+      .in('id', batch);
+    if (delErr) console.error('[Sync] Delete batch failed:', delErr);
+  }
+
+  console.log(`[Sync] Cleaned up ${dupeIds.length} duplicates`);
+  return dupeIds.length;
+}
+
 export async function forceSync(userId) {
   if (!supabase || !userId) throw new Error('Not signed in');
+
+  // Step 0: Clean up duplicate rows in Supabase FIRST
+  await cleanupDuplicates(userId);
 
   // Clear all studyhub localStorage keys (except theme)
   const keysToRemove = [];
