@@ -224,17 +224,15 @@ export function useLocalStorage(key, initialValue) {
       lastWrittenRef.current = json;
       localStorage.setItem(key, json);
 
-      // Only push to Supabase if this key has been changed by a USER ACTION.
-      // On mount, components write default values — those must NEVER push.
-      // After the first user-initiated change, the key is marked as "real"
-      // and all subsequent writes push normally.
       if (!mountedRef.current) {
         mountedRef.current = true;
-        // First write from this hook instance — don't push, it's the mount default
+        // First write from this hook instance — don't push
+        if (key === 'studyhub-resources-v2') console.log('[DEBUG] resources mount write (skipped push):', json.substring(0, 60));
         return;
       }
 
-      // Mark this key as user-changed and push
+      if (key === 'studyhub-resources-v2') console.log('[DEBUG] resources CHANGE write (pushing):', json.substring(0, 60));
+
       _userChangedKeys.add(key);
       pushToSupabase(key, storedValue);
 
@@ -265,6 +263,7 @@ export function useLocalStorage(key, initialValue) {
       try {
         const item = localStorage.getItem(key);
         if (item !== null && item !== lastWrittenRef.current) {
+          if (key === 'studyhub-resources-v2') console.log('[DEBUG] resources sync-pull re-read:', item?.substring(0, 60));
           lastWrittenRef.current = item;
           setStoredValue(JSON.parse(item));
         }
