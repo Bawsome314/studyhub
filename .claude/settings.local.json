@@ -25,7 +25,8 @@
       "Bash(npx mammoth:*)",
       "Bash(node:*)",
       "Bash(ls C:/Users/brand/studyhub/public/sw* C:/Users/brand/studyhub/dist/sw* C:/Users/brand/studyhub/src/sw*)",
-      "Bash(grep -r \"serviceWorker\\\\|workbox\\\\|sw\\\\.js\" C:/Users/brand/studyhub/src/main.jsx C:/Users/brand/studyhub/index.html C:/Users/brand/studyhub/vite.config.*)"
+      "Bash(grep -r \"serviceWorker\\\\|workbox\\\\|sw\\\\.js\" C:/Users/brand/studyhub/src/main.jsx C:/Users/brand/studyhub/index.html C:/Users/brand/studyhub/vite.config.*)",
+      "Bash(node -e \":*)"
     ]
   }
 }
