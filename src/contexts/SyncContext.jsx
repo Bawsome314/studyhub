@@ -4,30 +4,35 @@ import { fullSync } from '../lib/sync';
 
 const SyncContext = createContext();
 
+const WRITE_COOLDOWN_MS = 15000; // 15 seconds — don't pull if user wrote recently
+const PERIODIC_SYNC_MS = 3 * 60 * 1000;
+
 export function SyncProvider({ children }) {
   const { user } = useAuth();
   const [syncStatus, setSyncStatus] = useState('idle');
   const [lastSynced, setLastSynced] = useState(null);
   const [syncError, setSyncError] = useState(null);
   const syncingRef = useRef(false);
-  const lastWriteRef = useRef(0); // timestamp of last user write
+  const lastWriteRef = useRef(0);
+  const hasInitialSyncedRef = useRef(false);
 
-  // Track when user makes changes — prevents pull from racing
+  // Track user writes
   useEffect(() => {
     const handleWrite = () => { lastWriteRef.current = Date.now(); };
     window.addEventListener('studyhub-storage-write', handleWrite);
     return () => window.removeEventListener('studyhub-storage-write', handleWrite);
   }, []);
 
-  const doFullSync = useCallback(async () => {
+  const doSync = useCallback(async (force = false) => {
     if (!user || syncingRef.current) return;
 
-    // Don't pull if user wrote something in the last 10 seconds
-    // Their push might still be in-flight
-    const timeSinceWrite = Date.now() - lastWriteRef.current;
-    if (timeSinceWrite < 10000 && lastWriteRef.current > 0) {
-      console.log(`[Sync] Skipping pull — user wrote ${Math.round(timeSinceWrite / 1000)}s ago`);
-      return;
+    // ALL syncs respect cooldown unless forced
+    if (!force) {
+      const elapsed = Date.now() - lastWriteRef.current;
+      if (elapsed < WRITE_COOLDOWN_MS && lastWriteRef.current > 0) {
+        console.log(`[Sync] Skipping — user wrote ${Math.round(elapsed / 1000)}s ago`);
+        return;
+      }
     }
 
     syncingRef.current = true;
@@ -49,65 +54,35 @@ export function SyncProvider({ children }) {
     }
   }, [user]);
 
-  // Sync on login
+  // Initial sync on sign-in (once)
   useEffect(() => {
     if (!user) {
       setSyncStatus('idle');
       setLastSynced(null);
+      hasInitialSyncedRef.current = false;
       return;
     }
 
-    // On login: sync immediately (no write cooldown check)
-    syncingRef.current = true;
-    setSyncStatus('syncing');
-    fullSync(user.id).then(() => {
-      setSyncStatus('synced');
-      setLastSynced(new Date());
-      window.dispatchEvent(new Event('studyhub-sync-pull'));
-      window.dispatchEvent(new Event('studyhub-guides-updated'));
-    }).catch(err => {
-      console.error('[Sync] Login sync error:', err);
-      setSyncStatus('error');
-      setSyncError(err.message);
-    }).finally(() => {
-      syncingRef.current = false;
-    });
+    // Only do initial sync ONCE per sign-in, not on every token refresh
+    if (hasInitialSyncedRef.current) return;
+    hasInitialSyncedRef.current = true;
 
-    // Sync on tab focus (with write cooldown)
+    doSync(true); // force = true for initial sync
+
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && user) {
-        doFullSync();
-      }
+      if (document.visibilityState === 'visible') doSync();
     };
     document.addEventListener('visibilitychange', handleVisibility);
 
-    // Periodic sync every 3 min (with write cooldown)
-    const interval = setInterval(doFullSync, 3 * 60 * 1000);
+    const interval = setInterval(() => doSync(), PERIODIC_SYNC_MS);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
       clearInterval(interval);
     };
-  }, [user]);
+  }, [user, doSync]);
 
-  const manualSync = useCallback(async () => {
-    // Manual sync bypasses write cooldown
-    if (!user || syncingRef.current) return;
-    syncingRef.current = true;
-    setSyncStatus('syncing');
-    try {
-      await fullSync(user.id);
-      setSyncStatus('synced');
-      setLastSynced(new Date());
-      window.dispatchEvent(new Event('studyhub-sync-pull'));
-      window.dispatchEvent(new Event('studyhub-guides-updated'));
-    } catch (err) {
-      setSyncStatus('error');
-      setSyncError(err.message);
-    } finally {
-      syncingRef.current = false;
-    }
-  }, [user]);
+  const manualSync = useCallback(() => doSync(true), [doSync]);
 
   return (
     <SyncContext.Provider value={{ syncStatus, lastSynced, syncError, manualSync }}>
