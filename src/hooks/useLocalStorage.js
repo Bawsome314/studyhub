@@ -167,16 +167,29 @@ export function useLocalStorage(key, initialValue) {
   });
 
   const lastWrittenRef = useRef(null);
+  const isFirstRender = useRef(true);
+  const hadExistingData = useRef(localStorage.getItem(key) !== null);
 
   // Write to localStorage AND push to Supabase
   useEffect(() => {
     try {
       const json = JSON.stringify(storedValue);
       if (json === lastWrittenRef.current) return;
+
+      const isMount = isFirstRender.current;
+      isFirstRender.current = false;
       lastWrittenRef.current = json;
       localStorage.setItem(key, json);
 
-      // Push to Supabase (queues if offline/failed)
+      // CRITICAL: Don't push to Supabase on initial mount if we're just
+      // writing the default value. This prevents empty defaults from
+      // overwriting real data in Supabase.
+      if (isMount && !hadExistingData.current) {
+        // This is a default initialization — don't push to Supabase
+        return;
+      }
+
+      // User-initiated change OR existing data loaded — push to Supabase
       pushToSupabase(key, storedValue);
 
       // Notify other hook instances on this page
