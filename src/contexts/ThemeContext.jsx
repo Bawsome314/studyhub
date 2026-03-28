@@ -134,6 +134,7 @@ export function ThemeProvider({ children }) {
   const setCustomConfig = useCallback((config) => {
     setCustomConfigRaw(config);
     localStorage.setItem('studyhub-custom-theme', JSON.stringify(config));
+    window.dispatchEvent(new CustomEvent('studyhub-storage-write', { detail: { key: 'studyhub-custom-theme' } }));
   }, []);
 
   const setTheme = useCallback((id) => {
@@ -149,6 +150,7 @@ export function ThemeProvider({ children }) {
       document.documentElement.setAttribute('data-theme', theme);
     }
     localStorage.setItem('studyhub-theme', theme);
+    window.dispatchEvent(new CustomEvent('studyhub-storage-write', { detail: { key: 'studyhub-theme' } }));
   }, [theme, customConfig]);
 
   return (

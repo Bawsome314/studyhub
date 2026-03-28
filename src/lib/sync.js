@@ -6,11 +6,9 @@ import { markKeyAsReal } from '../hooks/useLocalStorage';
 const SYNC_PREFIX = 'studyhub-';
 // Keys that are device-local only — never push/pull these
 const SKIP_KEYS = [
-  'studyhub-theme',
-  'studyhub-custom-theme',
-  'studyhub-sync-timestamps',
   'studyhub-deleted-guides',
   'studyhub-last-session',
+  'studyhub-pending-writes',
 ];
 const GUIDE_KEY_PREFIX = 'studyhub-guide-data:';
 const DELETED_GUIDES_KEY = 'studyhub-deleted-guides';

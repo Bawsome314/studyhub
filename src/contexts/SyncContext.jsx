@@ -1,10 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { fullSync, forceSync as forceSyncFn } from '../lib/sync';
+import { fullSync } from '../lib/sync';
 
 const SyncContext = createContext();
-
-const PERIODIC_SYNC_MS = 3 * 60 * 1000;
 
 export function SyncProvider({ children }) {
   const { user } = useAuth();
@@ -12,35 +10,26 @@ export function SyncProvider({ children }) {
   const [lastSynced, setLastSynced] = useState(null);
   const [syncError, setSyncError] = useState(null);
   const syncingRef = useRef(false);
-  const periodicTimerRef = useRef(null);
+  const lastWriteRef = useRef(0); // timestamp of last user write
 
-  // Pull from Supabase on login, tab focus, and periodically
+  // Track when user makes changes — prevents pull from racing
   useEffect(() => {
-    if (!user) {
-      setSyncStatus('idle');
-      setLastSynced(null);
-      return;
-    }
-
-    doFullSync();
-
-    periodicTimerRef.current = setInterval(doFullSync, PERIODIC_SYNC_MS);
-
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && user) {
-        doFullSync();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      clearInterval(periodicTimerRef.current);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, [user]);
+    const handleWrite = () => { lastWriteRef.current = Date.now(); };
+    window.addEventListener('studyhub-storage-write', handleWrite);
+    return () => window.removeEventListener('studyhub-storage-write', handleWrite);
+  }, []);
 
   const doFullSync = useCallback(async () => {
     if (!user || syncingRef.current) return;
+
+    // Don't pull if user wrote something in the last 10 seconds
+    // Their push might still be in-flight
+    const timeSinceWrite = Date.now() - lastWriteRef.current;
+    if (timeSinceWrite < 10000 && lastWriteRef.current > 0) {
+      console.log(`[Sync] Skipping pull — user wrote ${Math.round(timeSinceWrite / 1000)}s ago`);
+      return;
+    }
+
     syncingRef.current = true;
     setSyncStatus('syncing');
     setSyncError(null);
@@ -49,7 +38,6 @@ export function SyncProvider({ children }) {
       await fullSync(user.id);
       setSyncStatus('synced');
       setLastSynced(new Date());
-      // Tell all useLocalStorage hooks to re-read from localStorage
       window.dispatchEvent(new Event('studyhub-sync-pull'));
       window.dispatchEvent(new Event('studyhub-guides-updated'));
     } catch (err) {
@@ -61,7 +49,65 @@ export function SyncProvider({ children }) {
     }
   }, [user]);
 
-  const manualSync = useCallback(() => doFullSync(), [doFullSync]);
+  // Sync on login
+  useEffect(() => {
+    if (!user) {
+      setSyncStatus('idle');
+      setLastSynced(null);
+      return;
+    }
+
+    // On login: sync immediately (no write cooldown check)
+    syncingRef.current = true;
+    setSyncStatus('syncing');
+    fullSync(user.id).then(() => {
+      setSyncStatus('synced');
+      setLastSynced(new Date());
+      window.dispatchEvent(new Event('studyhub-sync-pull'));
+      window.dispatchEvent(new Event('studyhub-guides-updated'));
+    }).catch(err => {
+      console.error('[Sync] Login sync error:', err);
+      setSyncStatus('error');
+      setSyncError(err.message);
+    }).finally(() => {
+      syncingRef.current = false;
+    });
+
+    // Sync on tab focus (with write cooldown)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && user) {
+        doFullSync();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Periodic sync every 3 min (with write cooldown)
+    const interval = setInterval(doFullSync, 3 * 60 * 1000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      clearInterval(interval);
+    };
+  }, [user]);
+
+  const manualSync = useCallback(async () => {
+    // Manual sync bypasses write cooldown
+    if (!user || syncingRef.current) return;
+    syncingRef.current = true;
+    setSyncStatus('syncing');
+    try {
+      await fullSync(user.id);
+      setSyncStatus('synced');
+      setLastSynced(new Date());
+      window.dispatchEvent(new Event('studyhub-sync-pull'));
+      window.dispatchEvent(new Event('studyhub-guides-updated'));
+    } catch (err) {
+      setSyncStatus('error');
+      setSyncError(err.message);
+    } finally {
+      syncingRef.current = false;
+    }
+  }, [user]);
 
   return (
     <SyncContext.Provider value={{ syncStatus, lastSynced, syncError, manualSync }}>

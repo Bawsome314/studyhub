@@ -4,11 +4,10 @@ import { supabase } from '../lib/supabase';
 // ═══ SYNC CONFIG ═══
 
 const NO_SYNC = new Set([
-  'studyhub-theme',
-  'studyhub-custom-theme',
   'studyhub-deleted-guides',
   'studyhub-last-session',
   'studyhub-guide-index',
+  'studyhub-pending-writes',
 ]);
 
 function shouldSync(key) {
