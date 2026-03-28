@@ -234,11 +234,46 @@ export async function syncGuides(userId) {
 export async function fullSync(userId) {
   if (!supabase || !userId) return { pulled: 0 };
 
+  // CRITICAL: Push ALL pending local changes to Supabase BEFORE pulling.
+  // This prevents the pull from overwriting changes that haven't been uploaded yet.
+  await pushAllLocalToSupabase(userId);
+
+  // Now pull — Supabase has our latest, so overwriting local is safe
   const { pulled, remoteKeys } = await pullFromSupabase(userId);
+
+  // Push any keys that still only exist locally (new keys from this device)
   const { pushed } = await pushNewKeysToSupabase(userId, remoteKeys);
+
+  // Sync guides
   await syncGuides(userId);
 
   return { pulled, pushed };
+}
+
+// Push ALL syncable localStorage keys to Supabase (not just new ones)
+async function pushAllLocalToSupabase(userId) {
+  if (!supabase || !userId) return;
+
+  // Also flush any pending writes from the offline queue
+  const { flushPendingWrites } = await import('../hooks/useLocalStorage.js');
+  await flushPendingWrites();
+
+  const keys = getAllLocalKeys();
+  if (keys.length === 0) return;
+
+  // Push in batches to avoid hitting limits
+  const rows = keys.map(key => {
+    let value;
+    try { value = JSON.parse(localStorage.getItem(key)); }
+    catch { value = localStorage.getItem(key); }
+    return { user_id: userId, key, value };
+  });
+
+  const { error } = await supabase
+    .from('user_data')
+    .upsert(rows, { onConflict: 'user_id,key' });
+
+  if (error) console.error('[Sync] Push all failed:', error);
 }
 
 // ═══ FORCE SYNC — nuclear reset, clear all local, re-pull everything ═══

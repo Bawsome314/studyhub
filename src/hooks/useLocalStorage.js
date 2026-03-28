@@ -19,17 +19,26 @@ function shouldSync(key) {
 // ═══ AUTH CACHE ═══
 
 let _cachedUserId = null;
+let _sessionReady = false;
+
 function getUserId() {
   return _cachedUserId;
 }
 
 if (supabase) {
+  // Get initial session
   supabase.auth.getSession().then(({ data }) => {
     _cachedUserId = data?.session?.user?.id || null;
+    _sessionReady = true;
+    if (_cachedUserId) {
+      console.log('[Sync] Session ready, userId:', _cachedUserId.substring(0, 8) + '...');
+      flushPendingWrites();
+    }
   });
+  // Listen for changes
   supabase.auth.onAuthStateChange((_event, session) => {
     _cachedUserId = session?.user?.id || null;
-    // On sign-in, flush any pending writes
+    _sessionReady = true;
     if (_cachedUserId) flushPendingWrites();
   });
 }
@@ -85,13 +94,13 @@ function pushToSupabase(key, value) {
 
   const userId = getUserId();
   if (!userId) {
-    // Not signed in — queue for later
+    console.log('[Sync] No userId yet, queuing:', key);
     addPendingWrite(key, value);
     return;
   }
 
   if (!_isOnline) {
-    // Offline — queue for reconnect
+    console.log('[Sync] Offline, queuing:', key);
     addPendingWrite(key, value);
     return;
   }
@@ -103,10 +112,9 @@ function pushToSupabase(key, value) {
 
   doWrite.then(({ error }) => {
     if (error) {
-      console.error('[Sync] Push failed, queuing:', key, error.message);
+      console.error('[Sync] Push FAILED:', key, error.message);
       addPendingWrite(key, value);
     } else {
-      // Success — remove from pending if it was there
       removePendingWrite(key);
     }
   });
