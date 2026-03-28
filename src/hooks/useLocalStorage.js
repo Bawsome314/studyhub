@@ -262,16 +262,21 @@ export function useLocalStorage(key, initialValue) {
     const handleSyncPull = () => {
       try {
         const item = localStorage.getItem(key);
-        if (item !== null && item !== lastWrittenRef.current) {
-          if (key === 'studyhub-resources-v2') console.log('[DEBUG] resources sync-pull re-read:', item?.substring(0, 60));
-          lastWrittenRef.current = item;
-          setStoredValue(JSON.parse(item));
+        if (item === null) return;
+        // Compare parsed values to avoid false change detection from key reordering
+        const parsed = JSON.parse(item);
+        const currentJson = JSON.stringify(storedValue);
+        const newJson = JSON.stringify(parsed);
+        if (currentJson !== newJson) {
+          if (key === 'studyhub-resources-v2') console.log('[DEBUG] resources sync-pull re-read (changed):', item?.substring(0, 60));
+          lastWrittenRef.current = JSON.stringify(parsed);
+          setStoredValue(parsed);
         }
       } catch {}
     };
     window.addEventListener('studyhub-sync-pull', handleSyncPull);
     return () => window.removeEventListener('studyhub-sync-pull', handleSyncPull);
-  }, [key]);
+  }, [key, storedValue]);
 
   return [storedValue, setStoredValue];
 }

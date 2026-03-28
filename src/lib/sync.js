@@ -98,13 +98,25 @@ export async function pullFromSupabase(userId) {
 
     remoteKeys.add(row.key);
 
-    // Write the value in the same format it was stored:
-    // - Objects/arrays: JSON.stringify (what useLocalStorage uses)
-    // - Strings: store raw (what ThemeContext and other direct writers use)
     const remoteValue = typeof row.value === 'string' ? row.value : JSON.stringify(row.value);
     const localValue = localStorage.getItem(row.key);
 
+    // Compare by re-serializing both through the SAME JSON.stringify path
+    // This avoids false positives from Supabase JSONB reordering keys
+    let isDifferent = false;
     if (remoteValue !== localValue) {
+      try {
+        const localParsed = localValue ? JSON.parse(localValue) : null;
+        // Re-serialize both through JSON.stringify for canonical comparison
+        const canonicalRemote = JSON.stringify(row.value);
+        const canonicalLocal = JSON.stringify(localParsed);
+        isDifferent = canonicalRemote !== canonicalLocal;
+      } catch {
+        isDifferent = true;
+      }
+    }
+
+    if (isDifferent) {
       // Safety check: don't overwrite real local data with empty remote data.
       // This handles the case where empty defaults were previously pushed to Supabase.
       const remoteEmpty = remoteValue === '[]' || remoteValue === '{}' || remoteValue === '""' || remoteValue === 'null';
